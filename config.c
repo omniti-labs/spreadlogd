@@ -19,15 +19,16 @@
 #include <unistd.h>
 #include <signal.h>
 
+#include "perl.h"
 #include "config.h"
 #include "skiplist.h"
 #include "timefuncs.h"
 
-extern FILE *yyin;
+extern FILE *sld_in;
 extern int buffsize;
 extern int nr_open;
 
-int yyparse (void);
+int sld_parse (void);
 int line_num, semantic_errors;
 static Skiplist logfiles;
 static Skiplist spreaddaemons;
@@ -71,7 +72,10 @@ int facility_compare(void *a, void *b) {
 int facility_compare_key(void *a, void *b) {
   LogFacility *br = (LogFacility *)b;
   return strcmp(a, br->groupname);
-}  
+}
+void config_cleanup() {
+  perl_shutdown();
+}
 int config_init(char *filename) {
   int ret;
   sl_init(&logfiles);
@@ -82,13 +86,14 @@ int config_init(char *filename) {
     sl_init(&logfacilities);
     sl_set_compare(&logfacilities, facility_compare, facility_compare_key);
   */
-  yyin = fopen(filename, "r");
-  if (!yyin) {
+  perl_startup();
+  sld_in = fopen(filename, "r");
+  if (!sld_in) {
     fprintf(stderr, "Couldn't open input file: %s\n", filename);
     return -1;
   }
-  ret = yyparse();
-  fclose(yyin);
+  ret = sld_parse();
+  fclose(sld_in);
   return ret;
 }  
 char *config_get_spreaddaemon(SpreadConfiguration *sc) {
@@ -130,6 +135,8 @@ LogFacility *config_new_logfacility(void) {
   newlf = malloc(sizeof(LogFacility));
   newlf->groupname=NULL;
   newlf->logfile=NULL;
+  newlf->perl_handler=NULL;
+  newlf->vhostdir=NULL;
   newlf->nmatches=0;
   newlf->rewritetimes=NO_REWRITE_TIMES;
   newlf->rewritetimesformat=NULL;
@@ -156,6 +163,10 @@ void config_set_logfacility_filename(LogFacility *lf, char *nf) {
   else {
     free(nf);
   }
+} 
+void config_set_logfacility_external_perl(LogFacility *lf, char *pf) {
+  if(lf->perl_handler) free(lf->perl_handler);
+  lf->perl_handler = strdup(pf);
 } 
 void config_set_logfacility_vhostdir(LogFacility *lf, char *vhd) {
   int i;
@@ -193,8 +204,12 @@ void config_add_logfacility_match(LogFacility *lf, char *nm) {
   if((ret = re_compile_pattern(nm, strlen(nm),
 			       &lf->match_expression[lf->nmatches]))!=0) {
     fprintf(stderr, ret);
-#else  
+#else
+#ifdef REG_EGREP
 if((ret = regcomp(&lf->match_expression[lf->nmatches], nm, REG_EGREP))!=0) {
+#else
+if((ret = regcomp(&lf->match_expression[lf->nmatches], nm, REG_EXTENDED))!=0) {
+#endif
       char errbuf[120];
       regerror(ret, &lf->match_expression[lf->nmatches], errbuf, sizeof errbuf);
       fprintf(stderr, errbuf);
@@ -243,7 +258,7 @@ char *config_process_message(SpreadConfiguration *sc, char *group,
 		     lf->rewritetimes, lf->rewritetimesformat);
   if(lf->vhostdir) {
     cp=message;
-    while(*cp != ' ') {
+    while(*cp != ' ' && *cp) {
 	cp++;
 	--*len;
     }
@@ -328,7 +343,7 @@ int config_start(void) {
     lf = (LogFacility *)lfiter->data;
     /* For each log facility in that spread configuration: */
     do {
-      if(lf->vhostdir) continue;
+      if(!lf->logfile || !lf->logfile->filename || lf->vhostdir) continue;
       else if(lf->logfile->fd<0) {
 			if(lf->logfile->filename[0] == '|') {
 				lf->logfile->fd = open_pipe_log(lf->logfile->filename);
@@ -360,6 +375,17 @@ int config_start(void) {
   return 0;
 }  
 
+int config_do_external_perl(SpreadConfiguration *sc, char *sender, char *group, char *message) {
+  LogFacility *lf;
+  lf = sl_find(sc->logfacilities, group, NULL);
+  if(!lf || !lf->perl_handler) return -1;
+  if(lf->vhostdir) {
+    return perl_log(lf->perl_handler, sender, group, message);
+  } else {
+    return perl_log(lf->perl_handler, sender, group, message);
+  }
+  return -1;
+}
 int config_get_fd(SpreadConfiguration *sc, char *group, char *message) {
   LogFacility *lf;
   int i, ret, slen, fd;
@@ -367,10 +393,10 @@ int config_get_fd(SpreadConfiguration *sc, char *group, char *message) {
   char *cp;
   char fullpath[MAXPATHLEN];
   lf = sl_find(sc->logfacilities, group, NULL);
-  if(!lf) return -1;
+  if(!lf || !lf->logfile || !lf->logfile->filename) return -1;
   if(lf->vhostdir) {
     cp = message;
-    while(*cp != ' '){
+    while(*cp != ' ' && *cp){
       cp++;
     }
     *cp = '\0';

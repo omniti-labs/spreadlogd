@@ -13,12 +13,12 @@
 
 extern int line_num, semantic_errors;
 extern int buffsize;
-extern char *yytext;
+extern char *sld_text;
 
 static SpreadConfiguration *current_sc = NULL;
 static LogFacility *current_lf = NULL;
 
-int yyerror(char *str);
+int sld_error(char *str);
 
 #define NEW_SC_IFNEEDED if(!current_sc) current_sc=config_new_spread_conf();
 
@@ -28,6 +28,7 @@ int yyerror(char *str);
 %start Config
 %token BUFFERSIZE SPREAD PORT HOST LOG GROUP FILENAME MATCH VHOSTGROUP VHOSTDIR
 %token OPENBRACE CLOSEBRACE EQUALS STRING CLF REWRITETIMES
+%token PERLLIB PERLUSE PERLLOG
 %%
 Config		:	Globals SpreadConfs
 			{ config_start(); }
@@ -41,6 +42,10 @@ GlobalParam	:	BUFFERSIZE EQUALS STRING
 			    buffsize = atoi($3);
 			  }
 			}
+		|	PERLLIB STRING
+			{ perl_inc($2); }
+		|	PERLUSE STRING
+			{ perl_use($2); }
 
 SpreadConfs	:	SpreadConf SpreadConfs
                 |	SpreadConf
@@ -82,6 +87,9 @@ Logparam	:	GROUP EQUALS STRING
 		|	FILENAME EQUALS STRING
 			{ NEW_LF_IFNEEDED;
 			  config_set_logfacility_filename(current_lf, $3); }
+		|	PERLLOG STRING
+			{ NEW_LF_IFNEEDED;
+			  config_set_logfacility_external_perl(current_lf, $2); }
 		|	MATCH EQUALS STRING
 			{ NEW_LF_IFNEEDED;
 			  config_add_logfacility_match(current_lf, $3); }
@@ -90,7 +98,6 @@ Logparam	:	GROUP EQUALS STRING
 			  config_set_logfacility_vhostdir(current_lf, $3); }
 		|	REWRITETIMES EQUALS CLF
 			{ NEW_LF_IFNEEDED;
-fprintf(stderr, "Setting logfacility to force local times in CLF\n");
 			  config_set_logfaclity_rewritetimes_clf(current_lf); }
 		|	REWRITETIMES EQUALS STRING
 			{ NEW_LF_IFNEEDED;
@@ -100,8 +107,8 @@ fprintf(stderr, "Setting logfacility to force local times in CLF\n");
 
 
 %%
-int yyerror(char *str) {
+int sld_error(char *str) {
   fprintf(stderr, "Parser error on or before line %d\n", line_num);
-  fprintf(stderr, "Offending token: %s\n", yytext);
+  fprintf(stderr, "Offending token: %s\n", sld_text);
   return -1;
 }

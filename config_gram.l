@@ -16,6 +16,10 @@
 
 extern int line_num;
 extern int semantic_errors;
+
+#define yylval sld_lval
+#define yytext sld_text
+
 %}
 qstring \"[^\"]*\"|\'[^\']*\'
 string  [^ \t\r\n#{}]+
@@ -39,6 +43,9 @@ VhostDir			{ return VHOSTDIR; }
 Match                           { return MATCH; }
 RewriteTimestamp		{ return REWRITETIMES; }
 CommonLogFormat			{ return CLF; }
+PerlLib                         { return PERLLIB; }
+PerlUse                         { return PERLUSE; }
+PerlLog                         { return PERLLOG; }
 {qstring}                       { int l = strlen(yytext);
                                   yytext[l-1] = 0;
                                   yylval = strdup(yytext+1);

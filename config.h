@@ -48,9 +48,11 @@ typedef struct {
   regex_t match_expression[10]; /* only up to ten */
   char *vhostdir;
   hash_element *hash;
+  char *perl_handler;
 } LogFacility;
 
 int config_init(char *); /* Initialize global structures */
+void config_cleanup(); /* Initialize global structures */
 
 char *config_get_spreaddaemon(SpreadConfiguration *);
 SpreadConfiguration *config_new_spread_conf(void);
@@ -64,6 +66,7 @@ LogFacility *config_new_logfacility(void);
 void config_add_logfacility(SpreadConfiguration *, LogFacility *);
 void config_set_logfacility_group(LogFacility *, char *);
 void config_set_logfacility_filename(LogFacility *, char *);
+void config_set_logfacility_external_perl(LogFacility *, char *);
 void config_add_logfacility_match(LogFacility *, char *);
 void config_set_logfacility_vhostdir(LogFacility *lf, char *vhd);
 void config_set_logfaclity_rewritetimes_clf(LogFacility *lf);
@@ -79,9 +82,11 @@ int config_start(void); /* Open files and get ready to log */
 int config_get_fd(SpreadConfiguration *sc,
 		  char *group, char *message); /* -1 if no write */
 
-#define YYSTYPE YYSTYPE
-typedef char * YYSTYPE;
-extern YYSTYPE yylval;
+int config_do_external_perl(SpreadConfiguration *sc,
+		  char *sender, char *group, char *message); /* -1 if no write */
+#define YYSTYPE MY_YYSTYPE
+typedef char * MY_YYSTYPE;
+extern YYSTYPE sld_lval;
 extern int yysemanticerr;
 
 

@@ -253,7 +253,6 @@ int main(int argc, char **argv) {
     FD_ZERO(&masterset);
     for(fd=0;fd<fdsetsize;fd++) {
       if(fds[fd]) {
-	fprintf(stderr, "Setting FD: %d\n", fd);
 	FD_SET(fd, &masterset);
       }
     }
@@ -302,10 +301,10 @@ int main(int argc, char **argv) {
 	      }
 	    } else if(Is_regular_mess(service_type)) {
 	      logfd = config_get_fd(fds[fd], groups[0], message);
-	      if(logfd<0) continue;
 	      pmessage = config_process_message(fds[fd],groups[0], message, &len);
+              config_do_external_perl(fds[fd], sender, groups[0], message);
+	      if(logfd<0) continue;
 	      write(logfd, pmessage, len);
-sleep(1);
 	    }
 #ifdef DROP_RECV
 	    /* Set DROP_RECV flag if we can */
@@ -332,5 +331,6 @@ sleep(1);
       }
     }
   }
+  config_cleanup();
   return -1;
 }
