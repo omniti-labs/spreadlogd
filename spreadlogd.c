@@ -20,7 +20,7 @@
 
 #include "config.h"
 
-#define SPREADLOGD_VERSION "1.4.3"
+#define SPREADLOGD_VERSION "1.5.0"
 
 #define _TODO_JOIN 1
 #define _TODO_PARANOID_CONNECT 2
@@ -169,7 +169,7 @@ int main(int argc, char **argv) {
   int getoption, debug = 0;
   struct sigaction signalaction;
   sigset_t ourmask;
-	nr_open = getnropen();
+  nr_open = getnropen();
 
   fdsetsize = FD_SETSIZE;
   fds = (SpreadConfiguration **)malloc(sizeof(SpreadConfiguration *)*
@@ -302,7 +302,12 @@ int main(int argc, char **argv) {
 	    } else if(Is_regular_mess(service_type)) {
 	      logfd = config_get_fd(fds[fd], groups[0], message);
 	      pmessage = config_process_message(fds[fd],groups[0], message, &len);
+#ifdef PERL
               config_do_external_perl(fds[fd], sender, groups[0], message);
+#endif
+#ifdef PYTHON
+              config_do_external_python(fds[fd], sender, groups[0], message);
+#endif
 	      if(logfd<0) continue;
 	      write(logfd, pmessage, len);
 	    }
