@@ -2,18 +2,18 @@ CC=gcc
 
 #### BEGIN ARCH DEPENDANT SECTION ####
 # For Linux
-#LDFLAGS=-L/usr/local/lib -L.
-#LIBS=-lsp -lskiplist
-#CFLAGS=-g -D__USE_LARGEFILE64 -Wall
-#MAIN=spreadlogd.o
+LDFLAGS=-L/usr/local/lib -L. -L/opt/spread/lib -Wl,-rpath /opt/spread/lib `perl -MExtUtils::Embed -e ldopts`
+LIBS=-lspread -lskiplist
+CFLAGS=-g -D__USE_LARGEFILE64 -Wall
+MAIN=spreadlogd.o
 
 # For FreeBSD
 #LDFLAGS=-L/usr/local/lib -L. `perl -MExtUtils::Embed -e ldopts`
 #LIBS=-lsp -lskiplist -lgnuregex
-#INCLUDES=-I/usr/local/include `perl -MExtUtils::Embed -e ccopts` -DPERL
+INCLUDES=-I/usr/local/include -I/opt/spread/include `perl -MExtUtils::Embed -e ccopts` -DPERL 
 #CFLAGS=-g -Wall -DHAVE_GNUREGEX_H
 #MAIN=spreadlogd-kqueue.o
-#PERL_OBJS=perl.o perlxsi.o
+PERL_OBJS=perl.o perlxsi.o
 
 #MACOSX
 #LDFLAGS=-L/usr/local/lib -L.

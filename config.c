@@ -151,7 +151,8 @@ LogFacility *config_new_logfacility(void) {
   newlf = malloc(sizeof(LogFacility));
   newlf->groupname=NULL;
   newlf->logfile=NULL;
-  newlf->perl_handler=NULL;
+  newlf->perl_log_handler=NULL;
+  newlf->perl_hup_handler=NULL;
   newlf->python_handler=NULL;
   newlf->vhostdir=NULL;
   newlf->nmatches=0;
@@ -183,8 +184,13 @@ void config_set_logfacility_filename(LogFacility *lf, char *nf) {
 } 
 #ifdef PERL
 void config_set_logfacility_external_perl(LogFacility *lf, char *pf) {
-  if(lf->perl_handler) free(lf->perl_handler);
-  lf->perl_handler = strdup(pf);
+  if(lf->perl_log_handler) free(lf->perl_log_handler);
+  lf->perl_log_handler = strdup(pf);
+} 
+
+void config_set_hupfacility_external_perl(LogFacility *lf, char *pf) {
+  if(lf->perl_hup_handler) free(lf->perl_hup_handler);
+  lf->perl_hup_handler = strdup(pf);
 } 
 #endif
 
@@ -297,6 +303,8 @@ char *config_process_message(SpreadConfiguration *sc, char *group,
 void config_hup(void) {
   config_close();
   config_start();
+#ifdef PERL
+#endif
 }  
 
 int config_close(void) {
@@ -322,7 +330,7 @@ int config_close(void) {
 	    lf->hash[i].fd = -1;
 	  }
 	}
-      } else if(lf->logfile->fd>0) {
+      } else if(lf->logfile && lf->logfile->fd>0) {
 	if(!skiplocking) flock(lf->logfile->fd, LOCK_UN);
 	close(lf->logfile->fd);
 	lf->logfile->fd = -1;
@@ -369,6 +377,9 @@ int config_start(void) {
     lf = (LogFacility *)lfiter->data;
     /* For each log facility in that spread configuration: */
     do {
+#ifdef PERL
+      if(lf->perl_hup_handler) perl_hup(lf->perl_hup_handler);
+#endif
       if(!lf->logfile || !lf->logfile->filename || lf->vhostdir) continue;
       else if(lf->logfile->fd<0) {
 			if(lf->logfile->filename[0] == '|') {
@@ -401,11 +412,11 @@ int config_start(void) {
 int config_do_external_perl(SpreadConfiguration *sc, char *sender, char *group, char *message) {
   LogFacility *lf;
   lf = sl_find(sc->logfacilities, group, NULL);
-  if(!lf || !lf->perl_handler) return -1;
+  if(!lf || !lf->perl_log_handler) return -1;
   if(lf->vhostdir) {
-    return perl_log(lf->perl_handler, sender, group, message);
+    return perl_log(lf->perl_log_handler, sender, group, message);
   } else {
-    return perl_log(lf->perl_handler, sender, group, message);
+    return perl_log(lf->perl_log_handler, sender, group, message);
   }
   return -1;
 }

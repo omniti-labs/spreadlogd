@@ -70,7 +70,7 @@ I32 perl_log(char *func, char *sender, char *group, char *message) {
     PUSHMARK(SP);                              /* remember the stack pointer    */
     XPUSHs(sv_2mortal(newSVpv(sender,0)));      /* push the base onto the stack  */
     XPUSHs(sv_2mortal(newSVpv(group,0)));      /* push the base onto the stack  */
-    XPUSHs(sv_2mortal(newSVpv(message,0)));    /* push the exponent onto stack  */
+    XPUSHs(sv_2mortal(newSVpv(message, 0)));  /* push the exponent onto stack  */
     PUTBACK;                                   /* make local stack pointer global */
     call_pv(func, G_SCALAR);                   /* call the function             */
     SPAGAIN;                                   /* refresh stack pointer         */
@@ -82,3 +82,20 @@ I32 perl_log(char *func, char *sender, char *group, char *message) {
     return retval;
 }
 
+I32 perl_hup(char *func) {
+    int retval;
+
+    dSP;                                  /* initialize stack pointer      */
+    ENTER;                                /* everything created after here */
+    SAVETMPS;                             /* ...is a temporary variable.   */
+    PUSHMARK(SP);                         /* remember the stack pointer    */
+    PUTBACK;                              /* make local stack pointer global */
+    call_pv(func, G_SCALAR);              /* call the function             */
+    SPAGAIN;                              /* refresh stack pointer         */
+                                          /* pop the return value from stack */
+    retval = POPi;
+    PUTBACK;
+    FREETMPS;                             /* free that return value        */
+    LEAVE;                                /* ...and the XPUSHed "mortal" args.*/
+    return retval;
+}

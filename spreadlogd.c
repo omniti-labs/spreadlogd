@@ -204,7 +204,7 @@ int main(int argc, char **argv) {
   if(config_init(configfile)) exit(-1);
 
   if(buffsize<0) buffsize = 1024*8; /* 8k buffer (like Apache) */
-  message = (char *)malloc(buffsize*sizeof(char));
+  message = (char *)malloc(buffsize*sizeof(char) + 1);
 
   if(verbose) {
     fprintf(stderr, "running spreadlogd as %s\n\tconfigfile:\t\t%s\n\tdebug:\t\t%s\n\tverbose:\t\t%s\n\tlog spread errors:\t%s\n\tbuffer size:\t\t%d\n",
@@ -301,6 +301,7 @@ int main(int argc, char **argv) {
 	      }
 	    } else if(Is_regular_mess(service_type)) {
 	      logfd = config_get_fd(fds[fd], groups[0], message);
+	      message[len] = '\0';
 	      pmessage = config_process_message(fds[fd],groups[0], message, &len);
 #ifdef PERL
               config_do_external_perl(fds[fd], sender, groups[0], message);

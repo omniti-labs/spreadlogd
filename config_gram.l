@@ -46,6 +46,7 @@ CommonLogFormat			{ return CLF; }
 PerlLib                         { return PERLLIB; }
 PerlUse                         { return PERLUSE; }
 PerlLog                         { return PERLLOG; }
+PerlHup				{ return PERLHUP; }
 PythonImport                    { return PYTHONIMPORT; }
 PythonLog                       { return PYTHONLOG; }
 {qstring}                       { int l = strlen(yytext);

@@ -48,7 +48,8 @@ typedef struct {
   regex_t match_expression[10]; /* only up to ten */
   char *vhostdir;
   hash_element *hash;
-  char *perl_handler;
+  char *perl_log_handler;
+  char *perl_hup_handler;
   char *python_handler;
 } LogFacility;
 
@@ -69,6 +70,7 @@ void config_set_logfacility_group(LogFacility *, char *);
 void config_set_logfacility_filename(LogFacility *, char *);
 void config_set_logfacility_external_perl(LogFacility *, char *);
 void config_add_logfacility_match(LogFacility *, char *);
+void config_set_hupfacility_external_perl(LogFacility *, char *);
 void config_set_logfacility_vhostdir(LogFacility *lf, char *vhd);
 void config_set_logfaclity_rewritetimes_clf(LogFacility *lf);
 void config_set_logfaclity_rewritetimes_user(LogFacility *lf, char *format);

@@ -29,7 +29,7 @@ int sld_error(char *str);
 %start Config
 %token BUFFERSIZE SPREAD PORT HOST LOG GROUP FILENAME MATCH VHOSTGROUP VHOSTDIR
 %token OPENBRACE CLOSEBRACE EQUALS STRING CLF REWRITETIMES
-%token PERLLIB PERLUSE PERLLOG PYTHONIMPORT PYTHONLOG PYTHONLIB
+%token PERLLIB PERLUSE PERLLOG PERLHUP PYTHONIMPORT PYTHONLOG PYTHONLIB
 %%
 Config		:	Globals SpreadConfs
 			{ config_start(); }
@@ -130,6 +130,16 @@ Logparam	:	GROUP EQUALS STRING
 			exit(0);
 #endif
 			}
+		|	PERLHUP STRING
+			{ NEW_LF_IFNEEDED;
+#ifdef PERL
+			  config_set_hupfacility_external_perl(current_lf, $2);
+#else
+			fprintf(stderr, "PERL not compiled in\n");
+			exit(0);
+#endif
+			}
+			
 		|	PYTHONLOG STRING
 			{ NEW_LF_IFNEEDED;
 #ifdef PYTHON
