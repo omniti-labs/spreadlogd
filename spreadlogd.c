@@ -16,10 +16,18 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sp.h>
+#include <errno.h>
 
 #include "config.h"
 
-#define SPREADLOGD_VERSION "1.4.2"
+#define SPREADLOGD_VERSION "1.4.3"
+
+#define _TODO_JOIN 1
+#define _TODO_PARANOID_CONNECT 2
+
+#ifndef FD_SETSIZE
+#define FD_SETSIZE 1024
+#endif
 
 extern char *optarg;
 extern int optind, opterr, optopt;
@@ -67,9 +75,34 @@ int join(LogFacility *lf, void *vpfd) {
 
 int connectandjoin(SpreadConfiguration *sc, void *uv) {
   int mbox;
-  int *tojoin = (int *)uv;
+  int *todo = (int *)uv;
   char sld[MAX_GROUP_NAME];
   snprintf(sld, MAX_GROUP_NAME, "sld-%05d", getpid());
+  if(sc->connected && *todo & _TODO_PARANOID_CONNECT) {
+    /* We _think_ we are connected, but want to really check */
+    int i;
+    int retval = 0;
+    struct timeval timeout;
+    fd_set readset, exceptset;
+
+    for(i=0;i<fdsetsize;i++)
+      if(fds[i] == sc)
+	break;
+    if(i>=fdsetsize) {
+      sc->connected = 0;
+    } else {
+      timeout.tv_sec = 0L;
+      timeout.tv_usec = 0L;
+      FD_ZERO(&readset); FD_SET(i, &readset);
+      FD_ZERO(&exceptset); FD_SET(i, &exceptset);
+
+      retval = select(fdsetsize, &readset, NULL, &exceptset, &timeout);
+      if(retval < 0 && errno == EBADF) {
+        sc->connected = 0;
+        fds[i] = NULL;
+      }
+    }
+  }
   if(sc->connected || SP_connect(config_get_spreaddaemon(sc),
 				 sld, 1, 0, &mbox,
 				 sc->private_group) == ACCEPT_SESSION) {
@@ -82,7 +115,7 @@ int connectandjoin(SpreadConfiguration *sc, void *uv) {
       fds[mbox] = sc;
     }
     sc->connected = 1;
-    if(*tojoin)
+    if(*todo & _TODO_JOIN)
       config_foreach_logfacility(sc, join, &mbox);
     return mbox;
   } else {
@@ -96,8 +129,12 @@ int connectandjoin(SpreadConfiguration *sc, void *uv) {
   return -1;  
 }
 
+int paranoid_establish_spread_connections() {
+  int tojoin = _TODO_JOIN | _TODO_PARANOID_CONNECT;
+  return config_foreach_spreadconf(connectandjoin, (void *)&tojoin);
+}
 int establish_spread_connections() {
-  int tojoin = 1;
+  int tojoin = _TODO_JOIN;
   return config_foreach_spreadconf(connectandjoin, (void *)&tojoin);
 }
 
@@ -127,9 +164,6 @@ int getnropen(void) {
 }
 
 int main(int argc, char **argv) {
-#ifdef SPREAD_VERSION
-  int mver, miver, pver;
-#endif
   char *configfile = default_configfile;
   char *message;
   int getoption, debug = 0;
@@ -137,7 +171,7 @@ int main(int argc, char **argv) {
   sigset_t ourmask;
 	nr_open = getnropen();
 
-  fdsetsize = getdtablesize();
+  fdsetsize = FD_SETSIZE;
   fds = (SpreadConfiguration **)malloc(sizeof(SpreadConfiguration *)*
 				       fdsetsize);
   memset(fds, 0, sizeof(SpreadConfiguration *)*fdsetsize);
@@ -229,8 +263,8 @@ int main(int argc, char **argv) {
       struct timeval timeout;
       int i;
 
-      readset = masterset;
-      exceptset = masterset;
+      memcpy(&readset, &masterset, sizeof(fd_set));
+      memcpy(&exceptset, &masterset, sizeof(fd_set));
       timeout.tv_sec = 1L;
       timeout.tv_usec = 0L;
       if(select(fdsetsize, &readset, NULL, &exceptset, &timeout) > 0) {
@@ -271,12 +305,18 @@ int main(int argc, char **argv) {
 	      if(logfd<0) continue;
 	      pmessage = config_process_message(fds[fd],groups[0], message, &len);
 	      write(logfd, pmessage, len);
+sleep(1);
 	    }
 #ifdef DROP_RECV
 	    /* Set DROP_RECV flag if we can */
 	    service_type = DROP_RECV;
 #endif
 	  }
+      } else {
+        if(errno == EBADF) {
+          /* Our Spread connection is bad */
+          paranoid_establish_spread_connections();
+        }
       }
       handle_signals();
       thistry = E_get_time();
