@@ -143,7 +143,7 @@ int sli_find_compare(Skiplist *sl,
   int count=0;
   m = sl->top;
   while(m) {
-    int compared;
+    int compared = 1;
     if(m->next) compared=comp(data, m->next->data);
     if(compared == 0) {
 #ifdef SL_DEBUG

@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <signal.h>
 #include <unistd.h>
 #include <sys/time.h>
@@ -18,7 +19,7 @@
 
 #include "config.h"
 
-#define SPREADLOGD_VERSION "1.4.1"
+#define SPREADLOGD_VERSION "1.4.2"
 
 extern char *optarg;
 extern int optind, opterr, optopt;
@@ -126,6 +127,9 @@ int getnropen(void) {
 }
 
 int main(int argc, char **argv) {
+#ifdef SPREAD_VERSION
+  int mver, miver, pver;
+#endif
   char *configfile = default_configfile;
   char *message;
   int getoption, debug = 0;
