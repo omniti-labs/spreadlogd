@@ -22,11 +22,14 @@ static int myprime[20] = {
         3,5,7,11,13,17,23,31,37,41,43,47,53,59,61,67,71,73,83,87
 };
 
-int gethash(void *hostheader, hash_element *hash) {
+int gethash(void *vhostheader, hash_element *hash) {
   int a, i;
   hash_element *elem;
+  char *hostheader = (char *)vhostheader;
   a = hashpjw(hostheader,nr_open);
-  if(hash[a].fd == -1) return -1;  /* return -1 if element is not here */
+  if(hash[a].fd == -1) {
+    return -1;  /* return -1 if element is not here */
+  }
   for(i=0;i<nr_open; i++) {
     elem = &hash[(a+(i*myprime[a%20]))%nr_open];
     /* return -1 if element is not possibly in hsah*/
@@ -40,13 +43,20 @@ int gethash(void *hostheader, hash_element *hash) {
 }
 
 void inshash(hash_element b, hash_element *hash) {
-  int a, i;
+  int a, i, off;
   a = hashpjw(b.hostheader,nr_open);
+  if(hash[a].fd == -1) {
+    hash[a] = b;
+    return;
+  }
   for(i=0;i<nr_open; i++)
-    if((hash[(a+(i*myprime[a%20]))%nr_open].fd) == -1) {
-      hash[(a+(i*myprime[a%20]))%nr_open] = b;
+    off = (a+(i*myprime[a%20]))%nr_open;
+    if((hash[off].fd) == -1) {
+      hash[off] = b;
       return;
     }
+  close(hash[a].fd);
+  hash[a] = b;
 }
 
 int hashpjw(const void *key, const int size) {
