@@ -55,7 +55,7 @@ int hashpjw(const void *key, const int size) {
   ptr = key;
   while (*ptr != '\0') {
     int tmp;
-    val = (val << 4) + (*ptr);
+	val = ((val << 1) + ((*ptr)*31 >> 5)) >> 1;
     if ((tmp = (val & 0xf0000000)) != 0) {
       val = val ^ (tmp >> 24);
       val = val ^ tmp;
