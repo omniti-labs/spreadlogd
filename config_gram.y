@@ -10,7 +10,7 @@
 */
 
 #include "config.h"
-#include "stdio.h"
+#include <stdio.h>
 
 extern int line_num, semantic_errors;
 extern int buffsize;
