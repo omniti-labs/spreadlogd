@@ -32,9 +32,13 @@ Spread                          { return SPREAD; }
 Port                            { return PORT; }
 Host                            { return HOST; }
 Log                             { return LOG; }
+VhostGroup			{ return VHOSTGROUP; }
 Group                           { return GROUP; }
 File                            { return FILENAME; }
+VhostDir			{ return VHOSTDIR; }
 Match                           { return MATCH; }
+RewriteTimestamp		{ return REWRITETIMES; }
+CommonLogFormat			{ return CLF; }
 {qstring}                       { int l = strlen(yytext);
                                   yytext[l-1] = 0;
                                   yylval = strdup(yytext+1);

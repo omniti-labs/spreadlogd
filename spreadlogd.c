@@ -13,12 +13,11 @@
 #include <signal.h>
 #include <unistd.h>
 #include <sys/time.h>
-
 #include <sp.h>
 
 #include "config.h"
 
-#define SPREADLOGD_VERSION "1.3"
+#define SPREADLOGD_VERSION "1.4"
 
 extern char *optarg;
 extern int optind, opterr, optopt;
@@ -29,7 +28,6 @@ int terminate = 0;
 int huplogs = 0;
 int skiplocking = 0;
 int buffsize = -1;
-
 SpreadConfiguration **fds;
 int fdsetsize;
 
@@ -201,6 +199,7 @@ int main(int argc, char **argv) {
     sp_time lasttry, thistry, timediff;
     service service_type;
     char sender[MAX_GROUP_NAME];
+    char *pmessage;
     int len, num_groups, endian, logfd;
     char groups[1][MAX_GROUP_NAME];
     int16 mess_type;
@@ -251,7 +250,8 @@ int main(int argc, char **argv) {
 	    } else if(Is_regular_mess(mess_type)) {
 	      logfd = config_get_fd(fds[fd], groups[0], message);
 	      if(logfd<0) continue;
-	      write(logfd, message, len);
+	      pmessage = config_process_message(fds[fd],groups[0], message, &len);
+	      write(logfd, pmessage, len);
 	    }
 	  }
       }

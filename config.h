@@ -14,9 +14,9 @@
 #include <stdlib.h>
 #include <sys/file.h>
 #include <regex.h>
-
 #include <sp.h>
 
+#include "hash.h"
 #include "skiplist.h"
 
 typedef struct {
@@ -32,11 +32,16 @@ typedef struct {
   int fd;
 } LogFile;
 
+
 typedef struct {
   char *groupname;
   LogFile *logfile;
   int nmatches;
+  int rewritetimes;
+  char *rewritetimesformat;
   regex_t match_expression[10]; /* only up to ten */
+  char *vhostdir;
+  hash_element *hash;
 } LogFacility;
 
 int config_init(char *); /* Initialize global structures */
@@ -54,10 +59,13 @@ void config_add_logfacility(SpreadConfiguration *, LogFacility *);
 void config_set_logfacility_group(LogFacility *, char *);
 void config_set_logfacility_filename(LogFacility *, char *);
 void config_add_logfacility_match(LogFacility *, char *);
+void config_set_logfacility_vhostdir(LogFacility *lf, char *vhd);
+void config_set_logfaclity_rewritetimes_clf(LogFacility *lf);
+void config_set_logfaclity_rewritetimes_user(LogFacility *lf, char *format);
 
 int config_foreach_logfacility(SpreadConfiguration *,
 			       int (*)(LogFacility *, void *), void *);
-
+char *config_process_message(SpreadConfiguration *sc, char *group, char *message, int *len);
 void config_hup(void);  /* config_close(); config_start(); */
 int config_close(void); /* Close files */
 int config_start(void); /* Open files and get ready to log */

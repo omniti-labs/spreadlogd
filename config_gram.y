@@ -18,14 +18,16 @@ extern char *yytext;
 static SpreadConfiguration *current_sc = NULL;
 static LogFacility *current_lf = NULL;
 
+int yyerror(char *str);
+
 #define NEW_SC_IFNEEDED if(!current_sc) current_sc=config_new_spread_conf();
 
 #define NEW_LF_IFNEEDED if(!current_sc) current_sc=config_new_spread_conf(); \
                         if(!current_lf) current_lf=config_new_logfacility();
 %}
 %start Config
-%token BUFFERSIZE SPREAD PORT HOST LOG GROUP FILENAME MATCH
-%token OPENBRACE CLOSEBRACE EQUALS STRING
+%token BUFFERSIZE SPREAD PORT HOST LOG GROUP FILENAME MATCH VHOSTGROUP VHOSTDIR
+%token OPENBRACE CLOSEBRACE EQUALS STRING CLF REWRITETIMES
 %%
 Config		:	Globals SpreadConfs
 			{ config_start(); }
@@ -83,6 +85,17 @@ Logparam	:	GROUP EQUALS STRING
 		|	MATCH EQUALS STRING
 			{ NEW_LF_IFNEEDED;
 			  config_add_logfacility_match(current_lf, $3); }
+		|	VHOSTDIR EQUALS STRING
+			{ NEW_LF_IFNEEDED;
+			  config_set_logfacility_vhostdir(current_lf, $3); }
+		|	REWRITETIMES EQUALS CLF
+			{ NEW_LF_IFNEEDED;
+fprintf(stderr, "Setting logfacility to force local times in CLF\n");
+			  config_set_logfaclity_rewritetimes_clf(current_lf); }
+		|	REWRITETIMES EQUALS STRING
+			{ NEW_LF_IFNEEDED;
+			  config_set_logfaclity_rewritetimes_user(current_lf,
+								  $3); }
 		;
 
 

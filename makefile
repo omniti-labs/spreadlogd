@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-g -D__USE_LARGEFILE64
+CFLAGS=-g -D__USE_LARGEFILE64 -Wall
 INCLUDES=-I/usr/local/include
 
 #### BEGIN ARCH DEPENDANT SECTION ####
@@ -8,7 +8,7 @@ LDFLAGS=-L/usr/local/lib -L.
 LIBS=-lsp -lskiplist
 
 # For Solaris
-#LIBS=-lsp -lskiplist -lnsl -lsocket -lucb
+#LIBS=-lsp -lskiplist -lnsl -lsocket -lucb 
 #LDFLAGS=-L/usr/local/lib -L/usr/ucblib -R/usr/ucblib -L.
 #BSDINCLUDES=-I/usr/ucbinclude
 #### END ARCH DEPENDANT SECTION ####
@@ -16,7 +16,7 @@ LIBS=-lsp -lskiplist
 YACC=bison -y
 LEX=flex
 
-OBJS=spreadlogd.o lex.yy.o y.tab.o config.o
+OBJS=spreadlogd.o lex.yy.o y.tab.o config.o hash.o timefuncs.o
 LSLOBJS=skiplist.o
 
 all:	spreadlogd
@@ -32,9 +32,13 @@ lex.yy.o: lex.yy.c y.tab.h
 y.tab.o: y.tab.c config.h
 	$(CC) $(CFLAGS) $(INCLUDES) -c y.tab.c
 
-config.o:	config.c
+test.o:	test.c
 	$(CC) $(CFLAGS) $(BSDINCLUDES) $(INCLUDES) -c $<
 
+config.o:	config.c
+	$(CC) $(CFLAGS) $(BSDINCLUDES) $(INCLUDES) -c $<
+hash.o:		hash.c
+	$(CC) $(CFLAGS) $(BSDINCLUDES) $(INCLUDES) -c $<
 .c.o:	$*.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c $<
 
