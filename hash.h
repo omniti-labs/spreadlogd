@@ -1,8 +1,6 @@
 #ifndef _HASH_H_
 #define _HASH_H_
 
-#include <linux/limits.h>
-
 typedef struct {
 char *hostheader;
 int fd;
