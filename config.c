@@ -19,8 +19,12 @@
 #include <unistd.h>
 #include <signal.h>
 
+#ifdef PERL
 #include "perl.h"
+#endif
+#ifdef PYTHON
 #include "python.h"
+#endif
 #include "config.h"
 #include "skiplist.h"
 #include "timefuncs.h"
@@ -75,8 +79,12 @@ int facility_compare_key(void *a, void *b) {
   return strcmp(a, br->groupname);
 }
 void config_cleanup() {
+#ifdef PERL
   perl_shutdown();
+#endif
+#ifdef PYTHON
   python_shutdown();
+#endif
 }
 
 int config_init(char *filename) {
@@ -89,8 +97,12 @@ int config_init(char *filename) {
     sl_init(&logfacilities);
     sl_set_compare(&logfacilities, facility_compare, facility_compare_key);
   */
+#ifdef PERL
   perl_startup();
+#endif
+#ifdef PYTHON
   python_startup();
+#endif
   sld_in = fopen(filename, "r");
   if (!sld_in) {
     fprintf(stderr, "Couldn't open input file: %s\n", filename);
@@ -169,15 +181,19 @@ void config_set_logfacility_filename(LogFacility *lf, char *nf) {
     free(nf);
   }
 } 
+#ifdef PERL
 void config_set_logfacility_external_perl(LogFacility *lf, char *pf) {
   if(lf->perl_handler) free(lf->perl_handler);
   lf->perl_handler = strdup(pf);
 } 
+#endif
 
+#ifdef PYTHON
 void config_set_logfacility_external_python(LogFacility *lf, char *pf) {
   if(lf->python_handler) free(lf->python_handler);
   lf->python_handler = strdup(pf);
 }
+#endif
 
 void config_set_logfacility_vhostdir(LogFacility *lf, char *vhd) {
   int i;
@@ -210,17 +226,16 @@ void config_add_logfacility_match(LogFacility *lf, char *nm) {
     fprintf(stderr, "Already 10 regex's on group\n");
     return;
   }
-#ifdef RE_SYNTAX_EGREP
+#if defined(RE_SYNTAX_EGREP)
   re_set_syntax(RE_SYNTAX_EGREP);
   if((ret = re_compile_pattern(nm, strlen(nm),
 			       &lf->match_expression[lf->nmatches]))!=0) {
-    fprintf(stderr, ret);
-#else
-#ifdef REG_EGREP
-if((ret = regcomp(&lf->match_expression[lf->nmatches], nm, REG_EGREP))!=0) {
-#else
+#elif defined(REG_EXTENDED)
 if((ret = regcomp(&lf->match_expression[lf->nmatches], nm, REG_EXTENDED))!=0) {
+#elif defined(REG_EGREP)
+if((ret = regcomp(&lf->match_expression[lf->nmatches], nm, REG_EGREP))!=0) {
 #endif
+#if defined(RE_SYNTAX_EGREP) || defined(REG_EXTENDED) || defined(REG_EGREP)
       char errbuf[120];
       regerror(ret, &lf->match_expression[lf->nmatches], errbuf, sizeof errbuf);
       fprintf(stderr, errbuf);
@@ -361,11 +376,7 @@ int config_start(void) {
 			}
 			else {
 			lf->logfile->fd = open(lf->logfile->filename,
-#ifdef __USE_LARGEFILE64
-			       O_CREAT|O_APPEND|O_WRONLY|O_LARGEFILE,
-#else  
 			       O_CREAT|O_APPEND|O_WRONLY,
-#endif  
 			       00644);
 			}
 		}	
@@ -386,6 +397,7 @@ int config_start(void) {
   return 0;
 }  
 
+#ifdef PERL
 int config_do_external_perl(SpreadConfiguration *sc, char *sender, char *group, char *message) {
   LogFacility *lf;
   lf = sl_find(sc->logfacilities, group, NULL);
@@ -397,7 +409,8 @@ int config_do_external_perl(SpreadConfiguration *sc, char *sender, char *group, 
   }
   return -1;
 }
-
+#endif
+#ifdef PYTHON
 int config_do_external_python(SpreadConfiguration *sc, char *sender, char *group, char *message) {
   LogFacility *lf;
   lf = sl_find(sc->logfacilities, group, NULL);
@@ -409,6 +422,7 @@ int config_do_external_python(SpreadConfiguration *sc, char *sender, char *group
   }
   return -1;
 }
+#endif
 int config_get_fd(SpreadConfiguration *sc, char *group, char *message) {
   LogFacility *lf;
   int i, ret, slen, fd;
@@ -428,11 +442,7 @@ int config_get_fd(SpreadConfiguration *sc, char *group, char *message) {
       *cp = ' ';
       snprintf(fullpath, MAXPATHLEN, "%s/%s", lf->vhostdir,temp.hostheader);
       temp.fd = open(fullpath,
-#ifdef __USE_LARGEFILE64
-		     O_CREAT|O_APPEND|O_WRONLY|O_LARGEFILE,
-#else  
 		     O_CREAT|O_APPEND|O_WRONLY,
-#endif  
 	 	     00644);
       if(!skiplocking) {
 	if(flock(temp.fd, LOCK_NB|LOCK_EX)==-1) {

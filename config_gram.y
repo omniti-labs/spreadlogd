@@ -44,13 +44,41 @@ GlobalParam	:	BUFFERSIZE EQUALS STRING
 			  }
 			}
 		|	PERLLIB STRING
-			{ perl_inc($2); }
+			{
+#ifdef PERL
+			perl_inc($2);
+#else
+			fprintf(stderr, "PERL not compiled in\n");
+			exit(0);
+#endif
+			}
 		|	PERLUSE STRING
-			{ perl_use($2); }
+			{
+#ifdef PERL
+			perl_use($2);
+#else
+			fprintf(stderr, "PERL not compiled in\n");
+			exit(0);
+#endif
+			}
                 |       PYTHONLIB STRING
-                        { python_inc($2); }
+                        {
+#ifdef PYTHON
+			python_inc($2);
+#else
+			fprintf(stderr, "PYTHON not compiled in\n");
+			exit(0);
+#endif
+			}
                 |       PYTHONIMPORT STRING
-                        { python_import($2); }
+                        {
+#ifdef PYTHON
+			python_import($2);
+#else
+			fprintf(stderr, "PYTHON not compiled in\n");
+			exit(0);
+#endif
+			}
 
 SpreadConfs	:	SpreadConf SpreadConfs
                 |	SpreadConf
@@ -94,11 +122,22 @@ Logparam	:	GROUP EQUALS STRING
 			  config_set_logfacility_filename(current_lf, $3); }
 		|	PERLLOG STRING
 			{ NEW_LF_IFNEEDED;
-			  config_set_logfacility_external_perl(current_lf, $2); }
+#ifdef PERL
+			  config_set_logfacility_external_perl(current_lf, $2);
+#else
+			fprintf(stderr, "PERL not compiled in\n");
+			exit(0);
+#endif
+			}
 		|	PYTHONLOG STRING
 			{ NEW_LF_IFNEEDED;
-			  config_set_logfacility_external_python(current_lf, $2); }
-
+#ifdef PYTHON
+			  config_set_logfacility_external_python(current_lf, $2);
+#else
+			fprintf(stderr, "PYTHON not compiled in\n");
+			exit(0);
+#endif
+			}
 		|	MATCH EQUALS STRING
 			{ NEW_LF_IFNEEDED;
 			  config_add_logfacility_match(current_lf, $3); }
