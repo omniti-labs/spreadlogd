@@ -276,7 +276,6 @@ int main(int argc, char **argv) {
 	for(kep = ke_vec; kep < &ke_vec[ret]; kep++) {
 	  SpreadConfiguration *sc = (SpreadConfiguration *)kep->udata;
 	  fd = kep->ident;
-fprintf(stderr, "Event on fd: %d sc: %p\n", fd, sc);
 	  if(sc && (fd>0) && kep->filter==EVFILT_READ) {
 	    len = SP_receive(fd, &service_type, sender,
 			     1, &num_groups, groups,
