@@ -157,12 +157,6 @@ int main(int argc, char **argv) {
     case 'D':
       debug = 1;
       break;
-    case 'V':
-      fprintf(stderr,
-	      "(%s VERSION: %s) %s\nLinked against libsp VERSION: %.2f\n",
-	      "spreadlogd", SPREADLOGD_VERSION, argv[0], SP_version());
-      exit(0);
-      break;
     default:
       usage(argv[0]);
     }
