@@ -33,6 +33,7 @@ int sld_error(char *str);
 %%
 Config		:	Globals SpreadConfs
 			{ config_start(); }
+		;
 
 Globals		:	GlobalParam Globals
                 |
