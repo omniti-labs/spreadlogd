@@ -13,7 +13,11 @@
 
 #include <stdlib.h>
 #include <sys/file.h>
+#ifdef HAVE_GNUREGEX_H
+#include <gnuregex.h>
+#else
 #include <regex.h>
+#endif
 #include <sp.h>
 
 #include "hash.h"

@@ -1,16 +1,22 @@
 CC=gcc
-CFLAGS=-g -D__USE_LARGEFILE64 -Wall
 INCLUDES=-I/usr/local/include
 
 #### BEGIN ARCH DEPENDANT SECTION ####
 # For Linux
+#LDFLAGS=-L/usr/local/lib -L.
+#LIBS=-lsp -lskiplist
+#CFLAGS=-g -D__USE_LARGEFILE64 -Wall
+
+# For FreeBSD
 LDFLAGS=-L/usr/local/lib -L.
-LIBS=-lsp -lskiplist
+LIBS=-lsp -lskiplist -lgnuregex
+CFLAGS=-g -Wall -DHAVE_GNUREGEX_H
 
 # For Solaris
 #LIBS=-lsp -lskiplist -lnsl -lsocket -lucb 
 #LDFLAGS=-L/usr/local/lib -L/usr/ucblib -R/usr/ucblib -L.
 #BSDINCLUDES=-I/usr/ucbinclude
+#CFLAGS=-g -D__USE_LARGEFILE64 -Wall
 #### END ARCH DEPENDANT SECTION ####
 
 YACC=bison -y
