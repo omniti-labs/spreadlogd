@@ -76,4 +76,5 @@ spreadlogd:	libskiplist.a $(MAIN) $(OBJS)
 	fi
 
 clean:
-	rm -f *~ *.o spreadlogd libskiplist.a y.tab.h y.tab.c lex.sld_.c
+	rm -f *~ *.o spreadlogd libskiplist.a y.tab.h y.tab.c lex.sld_.c \
+		perlxsi.c
