@@ -18,7 +18,7 @@
 
 #include "config.h"
 
-#define SPREADLOGD_VERSION "1.4"
+#define SPREADLOGD_VERSION "1.4.1"
 
 extern char *optarg;
 extern int optind, opterr, optopt;
@@ -252,6 +252,7 @@ int main(int argc, char **argv) {
 	      if(len == ILLEGAL_SESSION || len == CONNECTION_CLOSED) {
 		/* So, let's try */
 		SpreadConfiguration *thissc = fds[fd];
+		int retval;
 
 		if(extralog) {
 		  fprintf(stderr, "Terminal error closing spread mailbox %d\n",
@@ -261,7 +262,11 @@ int main(int argc, char **argv) {
 		FD_CLR(fd, &masterset);
 		tojoin = 1;
 		thissc->connected = 0;
-		FD_SET(connectandjoin(thissc, &tojoin), &masterset);
+		retval = connectandjoin(thissc, &tojoin);
+		if(retval >= 0)
+		  FD_SET(retval, &masterset);
+		else if(extralog)
+		  fprintf(stderr, "Error connecting to spread daemon\n");
 	      }
 	    } else if(Is_regular_mess(service_type)) {
 	      logfd = config_get_fd(fds[fd], groups[0], message);
