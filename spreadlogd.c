@@ -206,6 +206,7 @@ int main(int argc, char **argv) {
 #ifdef DROP_RECV
     service_type = DROP_RECV;
 #endif
+
     establish_spread_connections();
     FD_ZERO(&masterset);
     for(fd=0;fd<fdsetsize;fd++) {
@@ -228,10 +229,6 @@ int main(int argc, char **argv) {
 	    len = SP_receive(fd, &service_type, sender,
 			     1, &num_groups, groups,
 			     &mess_type, &endian, buffsize, message);
-#ifdef DROP_RECV
-	    /* Set DROP_RECV flag if we can */
-	    service_type = DROP_RECV;
-#endif
 	    /* Handle errors correctly */
 	    if(len == ILLEGAL_SESSION || len == CONNECTION_CLOSED ||
 	       len == ILLEGAL_MESSAGE || len == BUFFER_TOO_SHORT) {
@@ -247,12 +244,16 @@ int main(int argc, char **argv) {
 		thissc->connected = 0;
 		connectandjoin(thissc, &tojoin);
 	      }
-	    } else if(Is_regular_mess(mess_type)) {
+	    } else if(Is_regular_mess(service_type)) {
 	      logfd = config_get_fd(fds[fd], groups[0], message);
 	      if(logfd<0) continue;
 	      pmessage = config_process_message(fds[fd],groups[0], message, &len);
 	      write(logfd, pmessage, len);
 	    }
+#ifdef DROP_RECV
+	    /* Set DROP_RECV flag if we can */
+	    service_type = DROP_RECV;
+#endif
 	  }
       }
       handle_signals();
