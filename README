@@ -1,0 +1,21 @@
+This is a README file (for those that haven't already figured that out).
+
+Please read the LICENSE before using this software.
+
+This software works great for me.  Other than the options seen with -h
+there are a few tid bits of knowledge to know.
+
+If you are running on Solaris you will most probably need to add
+-lnsl -lsocket to the LIBS line in makefile.
+
+If you kill -HUP or kill the spreadlogd process, it will not actually
+process the signal until after it has received its next message from
+Spread.  You can move you log files to new names and then kill -HUP 
+and it will reopen the log files.  This is useful for seamless log rotation
+without losing any messages.
+
+Spread is really cool.  It is a poweful group communication toolkit 
+developed at the Center for Networking and Distributed Systems at the
+Johns Hopkins University.  http://www.spread.org/ and
+http://www.cnds.jhu.edu/, respectively.
+
