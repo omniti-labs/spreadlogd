@@ -18,7 +18,7 @@
 
 #include "config.h"
 
-#define SPREADLOGD_VERSION "1.2"
+#define SPREADLOGD_VERSION "1.3"
 
 extern char *optarg;
 extern int optind, opterr, optopt;
@@ -244,8 +244,9 @@ int main(int argc, char **argv) {
 	      if(len == ILLEGAL_SESSION || len == CONNECTION_CLOSED) {
 		/* So, let's try */
 		SpreadConfiguration *thissc = fds[fd];
+		tojoin = 1;
 		thissc->connected = 0;
-		connectandjoin(thissc, NULL);		
+		connectandjoin(thissc, &tojoin);
 	      }
 	    } else if(Is_regular_mess(mess_type)) {
 	      logfd = config_get_fd(fds[fd], groups[0], message);

@@ -5,8 +5,8 @@ Please read the LICENSE before using this software.
 This software works great for me.  Other than the options seen with -h
 there are a few tid bits of knowledge to know.
 
-If you are running on Solaris you will most probably need to add
--lnsl -lsocket to the LIBS line in makefile.
+Edit the makefile and uncomment/comment the right parts in the architecture
+dependant sections.
 
 If you kill -HUP or kill the spreadlogd process, it will not actually
 process the signal until after it has received its next message from

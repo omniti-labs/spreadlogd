@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <sys/file.h>
 #include <unistd.h>
 
 #include "config.h"
@@ -156,15 +157,26 @@ void config_set_logfacility_filename(LogFacility *lf, char *nf) {
   }
 }
 void config_add_logfacility_match(LogFacility *lf, char *nm) {
+#ifdef RE_SYNTAX_EGREP
   const char *ret;
+#else
+  int ret;
+#endif
   if(lf->nmatches>=10) {
     fprintf(stderr, "Already 10 regex's on group\n");
     return;
   }
+#ifdef RE_SYNTAX_EGREP
   re_set_syntax(RE_SYNTAX_EGREP);
   if((ret = re_compile_pattern(nm, strlen(nm),
 			      &lf->match_expression[lf->nmatches]))!=0) {
     fprintf(stderr, ret);
+#else
+ if((ret = regcomp(&lf->match_expression[lf->nmatches], nm, REG_EGREP))!=0) {
+   char errbuf[120];
+   regerror(ret, &lf->match_expression[lf->nmatches], errbuf, sizeof errbuf);
+   fprintf(stderr, errbuf);
+#endif
   } else {
     lf->nmatches++;
   }
@@ -281,7 +293,8 @@ int config_get_fd(SpreadConfiguration *sc, char *group, char *message) {
   if(!lf) return -1;
   if(!lf->nmatches) return lf->logfile->fd;
   slen = strlen(message);
-  for(i=0; i<lf->nmatches; i++)
+  for(i=0; i<lf->nmatches; i++) {
+#ifdef RE_SYNTAX_EGREP
     if((ret = re_search(&lf->match_expression[i],
 			message, slen, 0, slen, NULL)) >= 0)
       return lf->logfile->fd;
@@ -289,6 +302,11 @@ int config_get_fd(SpreadConfiguration *sc, char *group, char *message) {
       fprintf(stderr, "Internal error in re_search.\n");
     else if(ret==-1 && verbose)
       fprintf(stderr, "Failed match!\n");
+#else
+    if(!regexec(&lf->match_expression[i], message, 0, NULL, 0))
+      return lf->logfile->fd;
+#endif
+  }
   return -1;
 }
 
