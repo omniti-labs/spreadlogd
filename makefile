@@ -1,7 +1,5 @@
 CC=gcc
-INCLUDES=-I/usr/local/include
-
-INCLUDES=-I/usr/local/include `perl -MExtUtils::Embed -e ccopts`
+MAIN=spreadlogd.o
 
 #### BEGIN ARCH DEPENDANT SECTION ####
 # For Linux
@@ -10,14 +8,16 @@ INCLUDES=-I/usr/local/include `perl -MExtUtils::Embed -e ccopts`
 #CFLAGS=-g -D__USE_LARGEFILE64 -Wall
 
 # For FreeBSD
-#LDFLAGS=-L/usr/local/lib -L. `perl -MExtUtils::Embed -e ldopts`
-#LIBS=-lsp -lskiplist -lgnuregex
-#CFLAGS=-g -Wall -DHAVE_GNUREGEX_H
+LDFLAGS=-L/usr/local/lib -L. `perl -MExtUtils::Embed -e ldopts`
+LIBS=-lsp -lskiplist -lgnuregex
+INCLUDES=-I/usr/local/include `perl -MExtUtils::Embed -e ccopts` -DPERL
+CFLAGS=-g -Wall -DHAVE_GNUREGEX_H
+MAIN=spreadlogd-kqueue.o
 
 #MACOSX
-LDFLAGS=-L/usr/local/lib -L. `perl -MExtUtils::Embed -e ldopts`
-LIBS=-lsp -lskiplist
-CFLAGS=-g -Wall
+#LDFLAGS=-L/usr/local/lib -L. `perl -MExtUtils::Embed -e ldopts` -DPERL
+#LIBS=-lsp -lskiplist
+#CFLAGS=-g -Wall
 
 # For Solaris
 #LIBS=-lsp -lskiplist -lnsl -lsocket -lucb 
@@ -31,7 +31,7 @@ LEX=flex
 AR=ar
 RANLIB=ranlib
 
-OBJS=spreadlogd.o lex.sld_.o y.tab.o config.o hash.o timefuncs.o perl.o perlxsi.o
+OBJS=lex.sld_.o y.tab.o config.o hash.o timefuncs.o perl.o perlxsi.o
 LSLOBJS=skiplist.o
 
 all:	spreadlogd
@@ -64,8 +64,8 @@ libskiplist.a:	$(LSLOBJS)
 	$(AR) cq libskiplist.a $(LSLOBJS)
 	$(RANLIB) libskiplist.a
 
-spreadlogd:	libskiplist.a $(OBJS)
-	$(CC) -g -o $@ $(OBJS) $(LDFLAGS) $(LIBS)
+spreadlogd:	libskiplist.a $(MAIN) $(OBJS)
+	$(CC) -g -o $@ $(MAIN) $(OBJS) $(LDFLAGS) $(LIBS)
 
 clean:
 	rm -f *~ *.o spreadlogd libskiplist.a y.tab.h y.tab.c lex.sld_.c
