@@ -8,7 +8,6 @@
 * ======================================================================
 */
 
-#include <linux/limits.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -25,6 +24,7 @@
 
 extern FILE *yyin;
 extern int buffsize;
+extern int nr_open;
 
 int yyparse (void);
 int line_num, semantic_errors;
@@ -159,9 +159,9 @@ void config_set_logfacility_filename(LogFacility *lf, char *nf) {
 void config_set_logfacility_vhostdir(LogFacility *lf, char *vhd) {
   int i;
   lf->vhostdir = vhd;
-  lf->hash = (hash_element *) malloc (NR_OPEN * sizeof(hash_element));
+  lf->hash = (hash_element *) malloc (nr_open * sizeof(hash_element));
   fprintf( stderr, "\nZeroing vhost hash for usage!\n");
-  for(i=0; i<NR_OPEN; i++) {
+  for(i=0; i< nr_open; i++) {
     lf->hash[i].fd = -1;
     lf->hash[i].hostheader = NULL;
   }
@@ -273,7 +273,7 @@ int config_close(void) {
     /* For each log facility in that spread configuration: */
     do {
       if(lf->vhostdir) {
-	for (i=0;i<NR_OPEN;i++) {
+	for (i=0;i< nr_open;i++) {
 	  if(lf->hash[i].fd>0) {
 	    if(!skiplocking) flock(lf->hash[i].fd, LOCK_UN);
 	    close(lf->hash[i].fd);

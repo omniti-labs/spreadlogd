@@ -13,6 +13,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include <sys/resource.h>
 #include <sp.h>
 
 #include "config.h"
@@ -30,6 +31,7 @@ int skiplocking = 0;
 int buffsize = -1;
 SpreadConfiguration **fds;
 int fdsetsize;
+int nr_open;
 
 static char *default_configfile = "/etc/spreadlogd.conf";
 
@@ -115,6 +117,13 @@ void daemonize(void) {
   setsid();
   if(fork()!=0) exit(0);
 }
+int getnropen(void) {
+  struct rlimit rlim;
+  getrlimit(RLIMIT_NOFILE, &rlim);
+  rlim.rlim_cur = rlim.rlim_max;
+  setrlimit(RLIMIT_NOFILE, &rlim);
+  return rlim.rlim_cur;
+}
 
 int main(int argc, char **argv) {
   char *configfile = default_configfile;
@@ -122,6 +131,7 @@ int main(int argc, char **argv) {
   int getoption, debug = 0;
   struct sigaction signalaction;
   sigset_t ourmask;
+	nr_open = getnropen();
 
   fdsetsize = getdtablesize();
   fds = (SpreadConfiguration **)malloc(sizeof(SpreadConfiguration *)*
