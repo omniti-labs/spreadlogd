@@ -20,6 +20,7 @@
 #include <signal.h>
 
 #include "perl.h"
+#include "python.h"
 #include "config.h"
 #include "skiplist.h"
 #include "timefuncs.h"
@@ -75,7 +76,9 @@ int facility_compare_key(void *a, void *b) {
 }
 void config_cleanup() {
   perl_shutdown();
+  python_shutdown();
 }
+
 int config_init(char *filename) {
   int ret;
   sl_init(&logfiles);
@@ -87,6 +90,7 @@ int config_init(char *filename) {
     sl_set_compare(&logfacilities, facility_compare, facility_compare_key);
   */
   perl_startup();
+  python_startup();
   sld_in = fopen(filename, "r");
   if (!sld_in) {
     fprintf(stderr, "Couldn't open input file: %s\n", filename);
@@ -136,6 +140,7 @@ LogFacility *config_new_logfacility(void) {
   newlf->groupname=NULL;
   newlf->logfile=NULL;
   newlf->perl_handler=NULL;
+  newlf->python_handler=NULL;
   newlf->vhostdir=NULL;
   newlf->nmatches=0;
   newlf->rewritetimes=NO_REWRITE_TIMES;
@@ -168,6 +173,12 @@ void config_set_logfacility_external_perl(LogFacility *lf, char *pf) {
   if(lf->perl_handler) free(lf->perl_handler);
   lf->perl_handler = strdup(pf);
 } 
+
+void config_set_logfacility_external_python(LogFacility *lf, char *pf) {
+  if(lf->python_handler) free(lf->python_handler);
+  lf->python_handler = strdup(pf);
+}
+
 void config_set_logfacility_vhostdir(LogFacility *lf, char *vhd) {
   int i;
   lf->vhostdir = vhd;
@@ -383,6 +394,18 @@ int config_do_external_perl(SpreadConfiguration *sc, char *sender, char *group, 
     return perl_log(lf->perl_handler, sender, group, message);
   } else {
     return perl_log(lf->perl_handler, sender, group, message);
+  }
+  return -1;
+}
+
+int config_do_external_python(SpreadConfiguration *sc, char *sender, char *group, char *message) {
+  LogFacility *lf;
+  lf = sl_find(sc->logfacilities, group, NULL);
+  if(!lf || !lf->python_handler) return -1;
+  if(lf->vhostdir) {
+    return python_log(lf->python_handler, sender, group, message);
+  } else {
+    return python_log(lf->python_handler, sender, group, message);
   }
   return -1;
 }

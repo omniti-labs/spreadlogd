@@ -10,6 +10,7 @@
 */
 
 #include "config.h"
+#include "stdio.h"
 
 extern int line_num, semantic_errors;
 extern int buffsize;
@@ -28,14 +29,14 @@ int sld_error(char *str);
 %start Config
 %token BUFFERSIZE SPREAD PORT HOST LOG GROUP FILENAME MATCH VHOSTGROUP VHOSTDIR
 %token OPENBRACE CLOSEBRACE EQUALS STRING CLF REWRITETIMES
-%token PERLLIB PERLUSE PERLLOG
+%token PERLLIB PERLUSE PERLLOG PYTHONIMPORT PYTHONLOG PYTHONLIB
 %%
 Config		:	Globals SpreadConfs
 			{ config_start(); }
 
 Globals		:	GlobalParam Globals
-		|
-		;
+                |
+                ;
 
 GlobalParam	:	BUFFERSIZE EQUALS STRING
 			{ if(buffsize<0) {
@@ -46,6 +47,10 @@ GlobalParam	:	BUFFERSIZE EQUALS STRING
 			{ perl_inc($2); }
 		|	PERLUSE STRING
 			{ perl_use($2); }
+                |       PYTHONLIB STRING
+                        { python_inc($2); }
+                |       PYTHONIMPORT STRING
+                        { python_import($2); }
 
 SpreadConfs	:	SpreadConf SpreadConfs
                 |	SpreadConf
@@ -90,6 +95,10 @@ Logparam	:	GROUP EQUALS STRING
 		|	PERLLOG STRING
 			{ NEW_LF_IFNEEDED;
 			  config_set_logfacility_external_perl(current_lf, $2); }
+		|	PYTHONLOG STRING
+			{ NEW_LF_IFNEEDED;
+			  config_set_logfacility_external_python(current_lf, $2); }
+
 		|	MATCH EQUALS STRING
 			{ NEW_LF_IFNEEDED;
 			  config_add_logfacility_match(current_lf, $3); }
