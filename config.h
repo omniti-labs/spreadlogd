@@ -49,6 +49,7 @@ typedef struct {
   char *vhostdir;
   hash_element *hash;
   char *perl_handler;
+  char *python_handler;
 } LogFacility;
 
 int config_init(char *); /* Initialize global structures */
