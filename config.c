@@ -409,7 +409,8 @@ int config_get_fd(SpreadConfiguration *sc, char *group, char *message) {
       fprintf(stderr, "Internal error in re_search.\n");
     else if(ret==-1 && verbose)
       fprintf(stderr, "Failed match!\n");
-#else  if(!regexec(&lf->match_expression[i], message, 0, NULL, 0))
+#else
+  if(!regexec(&lf->match_expression[i], message, 0, NULL, 0))
     return lf->logfile->fd;
 #endif  
   }

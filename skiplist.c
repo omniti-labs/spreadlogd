@@ -184,7 +184,7 @@ struct skiplistnode *sl_insert(Skiplist *sl,
 struct skiplistnode *sl_insert_compare(Skiplist *sl,
 				       void *data,
 				       SkiplistComparator comp) {
-  struct skiplistnode *m, *p, *tmp, *ret, **stack;
+  struct skiplistnode *m, *p, *tmp, *ret=NULL, **stack;
   int nh=1, ch, stacki;
 #ifdef SLDEBUG
   sl_print_struct(sl, "BI: ");
