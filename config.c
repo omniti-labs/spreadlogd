@@ -17,6 +17,7 @@
 #include <sys/file.h>
 #include <sys/param.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include "config.h"
 #include "skiplist.h"
@@ -290,6 +291,29 @@ int config_close(void) {
   return 0;
 }  
 
+int open_pipe_log(char *filename)
+{
+	int pid, pfd[2];
+
+	if (pipe(pfd) < 0)
+		return -1;
+	if ((pid = fork()) < 0)
+		return -1;
+	else if (pid == 0) {
+		close(pfd[1]);
+		dup2(pfd[0], STDIN_FILENO);
+		close(pfd[0]);
+		signal(SIGCHLD, SIG_DFL);
+		signal(SIGHUP, SIG_IGN);
+		filename++; /* skip past leading '|' */
+		execl(SHELL_PATH, SHELL_PATH, "-c", filename, (char *) 0);
+	}
+	else {
+		close(pfd[0]);
+		return pfd[1];
+	}
+	return -1;
+}
 int config_start(void) {
   struct skiplistnode *sciter, *lfiter;
   SpreadConfiguration *sc;
@@ -305,14 +329,20 @@ int config_start(void) {
     /* For each log facility in that spread configuration: */
     do {
       if(lf->vhostdir) continue;
-      else if(lf->logfile->fd<0)
-	lf->logfile->fd = open(lf->logfile->filename,
+      else if(lf->logfile->fd<0) {
+			if(lf->logfile->filename[0] == '|') {
+				lf->logfile->fd = open_pipe_log(lf->logfile->filename);
+			}
+			else {
+			lf->logfile->fd = open(lf->logfile->filename,
 #ifdef __USE_LARGEFILE64
 			       O_CREAT|O_APPEND|O_WRONLY|O_LARGEFILE,
 #else  
 			       O_CREAT|O_APPEND|O_WRONLY,
 #endif  
 			       00644);
+			}
+		}	
       if(!skiplocking) {
 	if(flock(lf->logfile->fd, LOCK_NB|LOCK_EX)==-1) {
 	  fprintf(stderr, "Cannot lock %s, is another spreadlogd running?\n",

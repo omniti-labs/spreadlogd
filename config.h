@@ -19,6 +19,8 @@
 #include "hash.h"
 #include "skiplist.h"
 
+#define SHELL_PATH "/bin/sh"
+
 typedef struct {
   char *port;
   char *host;
