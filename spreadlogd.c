@@ -81,7 +81,7 @@ int connectandjoin(SpreadConfiguration *sc, void *uv) {
     sc->connected = 1;
     if(*tojoin)
       config_foreach_logfacility(sc, join, &mbox);
-    return 0;
+    return mbox;
   } else {
     if(verbose)
       fprintf(stderr, "Failed connection to spread at %s%c%s\n",
@@ -219,6 +219,8 @@ int main(int argc, char **argv) {
     while(1) {
       /* Build out select */
       struct timeval timeout;
+      int i;
+
       readset = masterset;
       exceptset = masterset;
       timeout.tv_sec = 1L;
@@ -240,9 +242,16 @@ int main(int argc, char **argv) {
 	      if(len == ILLEGAL_SESSION || len == CONNECTION_CLOSED) {
 		/* So, let's try */
 		SpreadConfiguration *thissc = fds[fd];
+
+		if(extralog) {
+		  fprintf(stderr, "Terminal error closing spread mailbox %d\n",
+		  	  fd);
+		}
+		fds[fd] = NULL;
+		FD_CLR(fd, &masterset);
 		tojoin = 1;
 		thissc->connected = 0;
-		connectandjoin(thissc, &tojoin);
+		FD_SET(connectandjoin(thissc, &tojoin), &masterset);
 	      }
 	    } else if(Is_regular_mess(service_type)) {
 	      logfd = config_get_fd(fds[fd], groups[0], message);
@@ -263,6 +272,10 @@ int main(int argc, char **argv) {
 	lasttry = thistry;
 	tojoin = 1;
 	config_foreach_spreadconf(connectandjoin, (void *)&tojoin);
+	FD_ZERO(&masterset);
+	for(i=0;i<fdsetsize;i++) {
+	  if(fds[i]) FD_SET(i, &masterset);
+	}
       }
     }
   }
