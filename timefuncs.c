@@ -55,7 +55,6 @@ void force_local_time(char *string, int *length, const int buffsize,
  timz = tz.tz_minuteswest;
  secs = now.tv_sec;
  t = localtime(&secs);
-fprintf(stderr, "Trying to rewrite...\n");
  if(style == NO_REWRITE_TIMES)
   return;
  else if(style == REWRITE_TIMES_IN_CLF) {
