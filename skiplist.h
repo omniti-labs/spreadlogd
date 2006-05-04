@@ -61,7 +61,10 @@ void sl_add_index(Skiplist *sl, SkiplistComparator,
 struct skiplistnode *sl_getlist(Skiplist *sl);
 void *sl_find_compare(Skiplist *sl, void *data, struct skiplistnode **iter,
 		      SkiplistComparator func);
+void *sl_find_compare_neighbors(Skiplist *sl, void *data, struct skiplistnode **iter, struct skiplistnode **left, struct skiplistnode **right,
+		                SkiplistComparator func);
 void *sl_find(Skiplist *sl, void *data, struct skiplistnode **iter);
+void *sl_find_neighbors(Skiplist *sl, void *data, struct skiplistnode **iter, struct skiplistnode **left, struct skiplistnode ** right);
 void *sl_next(Skiplist *sl, struct skiplistnode **);
 void *sl_previous(Skiplist *sl, struct skiplistnode **);
 
@@ -77,6 +80,12 @@ void sl_remove_all(Skiplist *sl, FreeFunc myfree);
 int sli_find_compare(Skiplist *sl,
 		    void *data,
 		    struct skiplistnode **ret,
+		    SkiplistComparator comp);
+int sli_find_compare_neighbors(Skiplist *sl,
+		    void *data,
+		    struct skiplistnode **ret,
+		    struct skiplistnode **left,
+		    struct skiplistnode **right,
 		    SkiplistComparator comp);
 
 #endif

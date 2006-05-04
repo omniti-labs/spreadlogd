@@ -110,19 +110,34 @@ struct skiplistnode *sl_getlist(Skiplist *sl) {
 void *sl_find(Skiplist *sl,
 	      void *data,
 	      struct skiplistnode **iter) {
+  return sl_find_neighbors(sl, data, iter, NULL, NULL);
+}
+void *sl_find_neighbors(Skiplist *sl,
+	                void *data,
+	                struct skiplistnode **iter,
+	                struct skiplistnode **left,
+	                struct skiplistnode **right) {
   void *ret;
   struct skiplistnode *aiter;
   if(!sl->compare) return 0;
   if(iter)
-    ret = sl_find_compare(sl, data, iter, sl->compare);
+    ret = sl_find_compare_neighbors(sl, data, iter, left, right, sl->compare);
   else
-    ret = sl_find_compare(sl, data, &aiter, sl->compare);
+    ret = sl_find_compare_neighbors(sl, data, &aiter, left, right, sl->compare);
   return ret;
 }  
 void *sl_find_compare(Skiplist *sli,
 		      void *data,
 		      struct skiplistnode **iter,
 		      SkiplistComparator comp) {
+  return sl_find_compare_neighbors(sli, data, iter, NULL, NULL, comp);
+}
+void *sl_find_compare_neighbors(Skiplist *sli,
+		                void *data,
+		                struct skiplistnode **iter,
+		                struct skiplistnode **left,
+		                struct skiplistnode **right,
+		                SkiplistComparator comp) {
   struct skiplistnode *m = NULL;
   Skiplist *sl;
   if(comp==sli->compare || !sli->index) {
@@ -132,18 +147,27 @@ void *sl_find_compare(Skiplist *sli,
     assert(m);
     sl=m->data;
   }
-  sli_find_compare(sl, data, iter, sl->comparek);
+  sli_find_compare_neighbors(sl, data, iter, left, right, sl->comparek);
   return (*iter)?((*iter)->data):(*iter);
 }
 int sli_find_compare(Skiplist *sl,
-		     void *data,
-		     struct skiplistnode **ret,
-		     SkiplistComparator comp) {
-  struct skiplistnode *m = NULL;
+                     void *data,
+                     struct skiplistnode **ret,
+                     SkiplistComparator comp) {
+  return sli_find_compare_neighbors(sl, data, ret, NULL, NULL, comp);
+}
+int sli_find_compare_neighbors(Skiplist *sl,
+		               void *data,
+		               struct skiplistnode **ret,
+		               struct skiplistnode **left,
+		               struct skiplistnode **right,
+		               SkiplistComparator comp) {
+  struct skiplistnode *m = NULL, *last = NULL;
   int count=0;
   m = sl->top;
   while(m) {
     int compared = 1;
+    last = m;
     if(m->next) compared=comp(data, m->next->data);
     if(compared == 0) {
 #ifdef SL_DEBUG
@@ -152,6 +176,10 @@ int sli_find_compare(Skiplist *sl,
       m=m->next;
       while(m->down) m=m->down;
       *ret = m;
+      if(left)
+        *left = (m->prev == sl->bottom)?NULL:m->prev;
+      if(right)
+        *right = m->next;
       return count;
     }
     if((m->next == NULL) || (compared<0))
@@ -162,6 +190,10 @@ int sli_find_compare(Skiplist *sl,
 #ifdef SL_DEBUG
   printf("Looking -- not found in %d steps\n", count);
 #endif
+  if(last) {
+    if(right) *right = last->next;
+    if(left && last->next) *left = (last == sl->bottom)?NULL:last;
+  }
   *ret = NULL;
   return count;
 }

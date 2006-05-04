@@ -2,31 +2,34 @@ CC=gcc
 
 #### BEGIN ARCH DEPENDANT SECTION ####
 # For Linux
-LDFLAGS=-L/usr/local/lib -L. -L/opt/spread/lib -Wl,-rpath /opt/spread/lib `perl -MExtUtils::Embed -e ldopts`
-LIBS=-lspread -lskiplist
-CFLAGS=-g -D__USE_LARGEFILE64 -Wall
-MAIN=spreadlogd.o
+#LDFLAGS=-L/usr/local/lib -L. -L/opt/spread/lib -Wl,-rpath /opt/spread/lib `perl -MExtUtils::Embed -e ldopts`
+#LIBS=-lspread -levent
+#CFLAGS=-g -D__USE_LARGEFILE64 -Wall
+#MAIN=spreadlogd.o
 
 # For FreeBSD
 #LDFLAGS=-L/usr/local/lib -L. `perl -MExtUtils::Embed -e ldopts`
-#LIBS=-lsp -lskiplist -lgnuregex
-INCLUDES=-I/usr/local/include -I/opt/spread/include `perl -MExtUtils::Embed -e ccopts` -DPERL 
+#LIBS=-lspread -lgnuregex -levent
 #CFLAGS=-g -Wall -DHAVE_GNUREGEX_H
 #MAIN=spreadlogd-kqueue.o
-PERL_OBJS=perl.o perlxsi.o
 
 #MACOSX
-#LDFLAGS=-L/usr/local/lib -L.
-#LIBS=-lsp -lskiplist
-#CFLAGS=-g -Wall
-#MAIN=spreadlogd.o
+LDFLAGS=-L/usr/local/lib -L. `perl -MExtUtils::Embed -e ldopts`
+LIBS=-lspread -levent
+CFLAGS=-g -Wall
+MAIN=spreadlogd.o
 
 # For Solaris
-#LIBS=-lsp -lskiplist -lnsl -lsocket -lucb 
+#LIBS=-lspread -lnsl -lsocket -lucb -levent
 #LDFLAGS=-L/usr/local/lib -L/usr/ucblib -R/usr/ucblib -L.
 #BSDINCLUDES=-I/usr/ucbinclude
 #CFLAGS=-g -D__USE_LARGEFILE64 -Wall
 #MAIN=spreadlogd.o
+
+PERL_OBJS=perl.o perlxsi.o
+INCLUDES=-I/usr/local/include -I/opt/spread/include `perl -MExtUtils::Embed -e ccopts` -DPERL 
+
+
 #### END ARCH DEPENDANT SECTION ####
 
 YACC=bison -y
@@ -34,7 +37,7 @@ LEX=flex
 AR=ar
 RANLIB=ranlib
 
-OBJS=lex.sld_.o y.tab.o config.o hash.o timefuncs.o $(PERL_OBJS)
+OBJS=lex.sld_.o y.tab.o config.o hash.o timefuncs.o module.o $(PERL_OBJS)
 LSLOBJS=skiplist.o
 
 all:	spreadlogd
@@ -67,12 +70,12 @@ libskiplist.a:	$(LSLOBJS)
 	$(AR) cq libskiplist.a $(LSLOBJS)
 	$(RANLIB) libskiplist.a
 
-spreadlogd:	libskiplist.a $(MAIN) $(OBJS)
+spreadlogd:	libskiplist.a $(MAIN) $(OBJS) $(LSLOBJS)
 	@if test -z "$(MAIN)"; then \
 		echo "Uncomment the correct section the makefile"; \
 		exit; \
 	else \
-		$(CC) -g -o $@ $(MAIN) $(OBJS) $(LDFLAGS) $(LIBS); \
+		$(CC) -g -o $@ $(MAIN) $(OBJS) $(LSLOBJS) $(LDFLAGS) $(LIBS); \
 	fi
 
 clean:

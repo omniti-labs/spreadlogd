@@ -19,6 +19,7 @@
 #include <regex.h>
 #endif
 #include <sp.h>
+#include <event.h>
 
 #include "hash.h"
 #include "skiplist.h"
@@ -31,6 +32,8 @@ typedef struct {
   char private_group[MAX_GROUP_NAME];
   int connected;
   Skiplist *logfacilities;
+  int fd;
+  struct event event;
 } SpreadConfiguration;
 
 typedef struct {
@@ -38,6 +41,11 @@ typedef struct {
   int fd;
 } LogFile;
 
+typedef struct sld_module_list {
+  char *module_name;
+  struct sld_module_abi *module;
+  struct sld_module_list *next;
+} sld_module_list_t;
 
 typedef struct {
   char *groupname;
@@ -51,6 +59,7 @@ typedef struct {
   char *perl_log_handler;
   char *perl_hup_handler;
   char *python_handler;
+  sld_module_list_t *modulelog;
 } LogFacility;
 
 int config_init(char *); /* Initialize global structures */
@@ -70,6 +79,7 @@ void config_set_logfacility_group(LogFacility *, char *);
 void config_set_logfacility_filename(LogFacility *, char *);
 void config_set_logfacility_external_perl(LogFacility *, char *);
 void config_add_logfacility_match(LogFacility *, char *);
+void config_set_logfacility_external_module(LogFacility *, char *);
 void config_set_hupfacility_external_perl(LogFacility *, char *);
 void config_set_logfacility_vhostdir(LogFacility *lf, char *vhd);
 void config_set_logfaclity_rewritetimes_clf(LogFacility *lf);
@@ -85,6 +95,8 @@ int config_start(void); /* Open files and get ready to log */
 int config_get_fd(SpreadConfiguration *sc,
 		  char *group, char *message); /* -1 if no write */
 
+int config_do_external_module(SpreadConfiguration *sc,
+		  char *sender, char *group, char *message); /* -1 if no write */
 int config_do_external_perl(SpreadConfiguration *sc,
 		  char *sender, char *group, char *message); /* -1 if no write */
 #define YYSTYPE MY_YYSTYPE

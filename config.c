@@ -28,10 +28,10 @@
 #include "config.h"
 #include "skiplist.h"
 #include "timefuncs.h"
+#include "module.h"
 
 extern FILE *sld_in;
 extern int buffsize;
-extern int nr_open;
 
 int sld_parse (void);
 int line_num, semantic_errors;
@@ -110,6 +110,8 @@ int config_init(char *filename) {
   }
   ret = sld_parse();
   fclose(sld_in);
+  if(ret) return ret;
+  ret = module_load_finalize();
   return ret;
 }  
 char *config_get_spreaddaemon(SpreadConfiguration *sc) {
@@ -148,16 +150,8 @@ SpreadConfiguration *config_new_spread_conf(void) {
 }  
 LogFacility *config_new_logfacility(void) {
   LogFacility *newlf;
-  newlf = malloc(sizeof(LogFacility));
-  newlf->groupname=NULL;
-  newlf->logfile=NULL;
-  newlf->perl_log_handler=NULL;
-  newlf->perl_hup_handler=NULL;
-  newlf->python_handler=NULL;
-  newlf->vhostdir=NULL;
-  newlf->nmatches=0;
+  newlf = calloc(1, sizeof(LogFacility));
   newlf->rewritetimes=NO_REWRITE_TIMES;
-  newlf->rewritetimesformat=NULL;
   return newlf;
 } 
 void config_add_logfacility(SpreadConfiguration *sc, LogFacility *lf) {
@@ -167,6 +161,13 @@ void config_set_logfacility_group(LogFacility *lf, char *ng) {
   if(lf->groupname) free(lf->groupname);
   lf->groupname = ng;
 } 
+void config_set_logfacility_external_module(LogFacility *lf, char *sym) {
+  sld_module_list_t *newhead;
+  newhead = calloc(1, sizeof(*newhead));
+  newhead->module_name = strdup(sym);
+  newhead->next = lf->modulelog;
+  lf->modulelog = newhead;
+}
 void config_set_logfacility_filename(LogFacility *lf, char *nf) {
   LogFile *logf;
   logf = sl_find(&logfiles, nf, NULL);
@@ -204,9 +205,9 @@ void config_set_logfacility_external_python(LogFacility *lf, char *pf) {
 void config_set_logfacility_vhostdir(LogFacility *lf, char *vhd) {
   int i;
   lf->vhostdir = vhd;
-  lf->hash = (hash_element *) malloc (nr_open * sizeof(hash_element));
+  lf->hash = (hash_element *) malloc (FHASH_SIZE * sizeof(hash_element));
   fprintf( stderr, "\nZeroing vhost hash for usage!\n");
-  for(i=0; i< nr_open; i++) {
+  for(i=0; i< FHASH_SIZE; i++) {
     lf->hash[i].fd = -1;
     lf->hash[i].hostheader = NULL;
   }
@@ -323,7 +324,7 @@ int config_close(void) {
     /* For each log facility in that spread configuration: */
     do {
       if(lf->vhostdir) {
-	for (i=0;i< nr_open;i++) {
+	for (i=0;i< FHASH_SIZE;i++) {
 	  if(lf->hash[i].fd>0) {
 	    if(!skiplocking) flock(lf->hash[i].fd, LOCK_UN);
 	    close(lf->hash[i].fd);
@@ -408,6 +409,19 @@ int config_start(void) {
   return 0;
 }  
 
+int config_do_external_module(SpreadConfiguration *sc, char *sender, char *group, char *message) {
+  LogFacility *lf;
+  sld_module_list_t *node;
+  lf = sl_find(sc->logfacilities, group, NULL);
+  if(!lf || !lf->modulelog) return -1;
+  for(node=lf->modulelog; node; node=node->next) {
+    if(!node->module) node->module = module_get(node->module_name);
+fprintf(stderr, "running %s [%p]\n", node->module_name, node->module);
+    if(node->module) node->module->logline(sc, sender, group, message);
+  }
+  return 0;
+}
+
 #ifdef PERL
 int config_do_external_perl(SpreadConfiguration *sc, char *sender, char *group, char *message) {
   LogFacility *lf;
@@ -436,7 +450,7 @@ int config_do_external_python(SpreadConfiguration *sc, char *sender, char *group
 #endif
 int config_get_fd(SpreadConfiguration *sc, char *group, char *message) {
   LogFacility *lf;
-  int i, ret, slen, fd;
+  int i, slen, fd;
   hash_element temp;
   char *cp;
   char fullpath[MAXPATHLEN];

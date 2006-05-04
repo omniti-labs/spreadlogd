@@ -43,6 +43,9 @@ VhostDir			{ return VHOSTDIR; }
 Match                           { return MATCH; }
 RewriteTimestamp		{ return REWRITETIMES; }
 CommonLogFormat			{ return CLF; }
+ModuleDir			{ return MODULEDIR; }
+LoadModule			{ return LOADMODULE; }
+ModuleLog			{ return MODULELOG; }
 PerlLib                         { return PERLLIB; }
 PerlUse                         { return PERLUSE; }
 PerlLog                         { return PERLLOG; }

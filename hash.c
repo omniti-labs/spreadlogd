@@ -18,7 +18,7 @@
 
 #include "hash.h"
 
-extern int nr_open;
+int __fhash_size = 1024;
 static int myprime[20] = {
         3,5,7,11,13,17,23,31,37,41,43,47,53,59,61,67,71,73,83,87
 };
@@ -27,12 +27,12 @@ int gethash(void *vhostheader, hash_element *hash) {
   int a, i;
   hash_element *elem;
   char *hostheader = (char *)vhostheader;
-  a = hashpjw(hostheader,nr_open);
+  a = hashpjw(hostheader,FHASH_SIZE);
   if(hash[a].fd == -1) {
     return -1;  /* return -1 if element is not here */
   }
-  for(i=0;i<nr_open; i++) {
-    elem = &hash[(a+(i*myprime[a%20]))%nr_open];
+  for(i=0;i<FHASH_SIZE; i++) {
+    elem = &hash[(a+(i*myprime[a%20]))%FHASH_SIZE];
     /* return -1 if element is not possibly in hsah*/
     if (elem->fd == -1)
       return -1;
@@ -45,13 +45,13 @@ int gethash(void *vhostheader, hash_element *hash) {
 
 void inshash(hash_element b, hash_element *hash) {
   int a, i, off;
-  a = hashpjw(b.hostheader,nr_open);
+  a = hashpjw(b.hostheader,FHASH_SIZE);
   if(hash[a].fd == -1) {
     hash[a] = b;
     return;
   }
-  for(i=0;i<nr_open; i++)
-    off = (a+(i*myprime[a%20]))%nr_open;
+  for(i=0;i<FHASH_SIZE; i++)
+    off = (a+(i*myprime[a%20]))%FHASH_SIZE;
     if((hash[off].fd) == -1) {
       hash[off] = b;
       return;

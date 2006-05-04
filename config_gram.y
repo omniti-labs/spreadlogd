@@ -11,10 +11,12 @@
 
 #include "config.h"
 #include <stdio.h>
+#include <string.h>
 
 extern int line_num, semantic_errors;
 extern int buffsize;
 extern char *sld_text;
+extern char *module_dir;
 
 static SpreadConfiguration *current_sc = NULL;
 static LogFacility *current_lf = NULL;
@@ -30,6 +32,7 @@ int sld_error(char *str);
 %token BUFFERSIZE SPREAD PORT HOST LOG GROUP FILENAME MATCH VHOSTGROUP VHOSTDIR
 %token OPENBRACE CLOSEBRACE EQUALS STRING CLF REWRITETIMES
 %token PERLLIB PERLUSE PERLLOG PERLHUP PYTHONIMPORT PYTHONLOG PYTHONLIB
+%token MODULEDIR LOADMODULE MODULELOG
 %%
 Config		:	Globals SpreadConfs
 			{ config_start(); }
@@ -44,6 +47,12 @@ GlobalParam	:	BUFFERSIZE EQUALS STRING
 			    buffsize = atoi($3);
 			  }
 			}
+		|	MODULEDIR EQUALS STRING
+			{ module_dir = strdup($3); }
+		|	LOADMODULE STRING
+			{ module_load($2, NULL); }
+		|	LOADMODULE STRING STRING
+			{ module_load($2, $3); }
 		|	PERLLIB STRING
 			{
 #ifdef PERL
@@ -121,6 +130,10 @@ Logparam	:	GROUP EQUALS STRING
 		|	FILENAME EQUALS STRING
 			{ NEW_LF_IFNEEDED;
 			  config_set_logfacility_filename(current_lf, $3); }
+		|	MODULELOG STRING
+			{ NEW_LF_IFNEEDED;
+			  config_set_logfacility_external_module(current_lf, $2);
+			}
 		|	PERLLOG STRING
 			{ NEW_LF_IFNEEDED;
 #ifdef PERL
