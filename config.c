@@ -416,7 +416,6 @@ int config_do_external_module(SpreadConfiguration *sc, char *sender, char *group
   if(!lf || !lf->modulelog) return -1;
   for(node=lf->modulelog; node; node=node->next) {
     if(!node->module) node->module = module_get(node->module_name);
-fprintf(stderr, "running %s [%p]\n", node->module_name, node->module);
     if(node->module) node->module->logline(sc, sender, group, message);
   }
   return 0;

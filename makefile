@@ -38,7 +38,7 @@ AR=ar
 RANLIB=ranlib
 
 OBJS=lex.sld_.o y.tab.o config.o hash.o timefuncs.o module.o $(PERL_OBJS)
-LSLOBJS=skiplist.o
+LSLOBJS=skiplist.o echash.o
 
 all:	spreadlogd
 

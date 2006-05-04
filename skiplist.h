@@ -88,4 +88,25 @@ int sli_find_compare_neighbors(Skiplist *sl,
 		    struct skiplistnode **right,
 		    SkiplistComparator comp);
 
+static inline void *sl_peek(Skiplist * a)
+{
+  struct skiplistnode *sln;
+  sln = sl_getlist(a);
+  if (sln)
+    return sln->data;
+  return NULL;
+}
+
+static inline void *sl_pop(Skiplist * a, FreeFunc myfree)
+{
+  struct skiplistnode *sln;
+  void *data = NULL;
+  sln = sl_getlist(a);
+  if (sln) {
+    data = sln->data;
+    sli_remove(a, sln, myfree);
+  }
+  return data;
+}
+
 #endif

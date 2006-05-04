@@ -39,7 +39,7 @@ void sli_init(Skiplist *sl) {
   sl->preheight=0;
   sl->size=0;
   sl->top = NULL;
-   sl->bottom = NULL;
+  sl->bottom = NULL;
   sl->index = NULL;
 }
 
@@ -293,6 +293,7 @@ struct skiplistnode *sl_insert_compare(Skiplist *sl,
     p = tmp;
   }
   free(stack);
+  sl->size++;
   if(sl->index != NULL) {
     /* this is a external insertion, we must insert into each index as well */
     struct skiplistnode *p, *ni, *li;
@@ -307,8 +308,6 @@ struct skiplistnode *sl_insert_compare(Skiplist *sl,
       ni->previndex = li;
       li = ni;
     }
-  } else {
-    sl->size++;
   }
 #ifdef SLDEBUG
   sl_print_struct(sl, "AI: ");
@@ -451,7 +450,7 @@ int sli_remove(Skiplist *sl, struct skiplistnode *m, FreeFunc myfree) {
   struct skiplistnode *p;
   if(!m) return 0;
   if(m->nextindex) sli_remove(m->nextindex->sl, m->nextindex, NULL);
-  else sl->size--;
+  sl->size--;
 #ifdef SLDEBUG
   sl_print_struct(sl, "BR:");
 #endif
