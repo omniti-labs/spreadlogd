@@ -200,10 +200,13 @@ static void reconnect_spread(int fd, short event, void *arg) {
   event_add(reconn, &tv);
 }
 
+static void stderr_debug(int s, const char *m) {
+  fprintf(stderr, "[%d] %s\n", s, m);
+}
 int main(int argc, char **argv) {
   char *configfile = default_configfile;
   struct event signal_hup, signal_term, reconn;
-  int getoption, debug = 0;
+  int getoption, debug = 0, rv;
   struct timeval tv;
 
   event_init();
@@ -248,6 +251,7 @@ int main(int argc, char **argv) {
   }
 
   if(!debug) daemonize();
+  else event_set_log_callback(stderr_debug);
 
   /* SIGHUP and SIGTERM */
   event_set(&signal_hup, SIGHUP, EV_SIGNAL|EV_PERSIST, sig_handler,
@@ -263,7 +267,8 @@ int main(int argc, char **argv) {
   event_add(&reconn, &tv);
   
   establish_spread_connections();
-  event_dispatch();
+  rv = event_dispatch();
+  printf("event_dispatch -> %d [%d]\n", rv, errno);
   config_cleanup();
   return 0;
 }

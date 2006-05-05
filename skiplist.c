@@ -98,7 +98,7 @@ void sl_add_internal(Skiplist * sl, Skiplist *sli, Skiplist *ni)
   m = sl_insert(sli, ni);
   while (m->level[0].prev)
     m = m->level[0].prev, icount++;
-  for (m = sl_getlist(sl); m; sl_next(sl, &m)) {
+  for (m = sl_getlist(sl); m; sl_next(&m)) {
     int j = icount - 1;
     struct skiplistnode *nsln;
     nsln = sl_insert(ni, m->data);
@@ -268,19 +268,19 @@ int sli_find_compare(const Skiplist * sl,
   *ret = NULL;
   return count;
 }
-void *sl_next(Skiplist * sl, struct skiplistnode **iter)
+void *sl_next(struct skiplistnode **iter)
 {
   if (!*iter)
     return NULL;
   *iter = (*iter)->level[0].next;
   return (*iter) ? ((*iter)->data) : NULL;
 }
-void *sl_previous(Skiplist * sl, struct skiplistnode **iter)
+void *sl_previous(struct skiplistnode **iter)
 {
   if (!*iter)
     return NULL;
   *iter = (*iter)->level[0].prev;
-  if(*iter == sl->bottom) *iter = NULL;
+  if((*iter) && !(*iter)->level[0].prev) *iter = NULL;
   return (*iter) ? ((*iter)->data) : NULL;
 }
 struct skiplistnode *sl_insert(Skiplist * sl, void *data)
@@ -295,7 +295,7 @@ static void sli_insert_multi(Skiplist *slsl, struct skiplistnode *ret) {
     /* this is a external insertion, we must insert into each index as well */
     struct skiplistnode *p, *ni, *li;
     li = ret;
-    for (p = sl_getlist(slsl); p; sl_next(slsl, &p)) {
+    for (p = sl_getlist(slsl); p; sl_next(&p)) {
       ni = sl_insert((Skiplist *) p->data, ret->data);
       assert(ni);
 #ifdef SLDEBUG

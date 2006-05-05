@@ -82,9 +82,8 @@ API_EXPORT(void *) sl_find_compare(const Skiplist * sl, const void *data,
 API_EXPORT(void *) sl_find_compare_neighbors(const Skiplist * sl, const void *data, struct skiplistnode **iter, struct skiplistnode **prev, struct skiplistnode **next, SkiplistComparator func);
 API_EXPORT(void *) sl_find(const Skiplist * sl, const void *data, struct skiplistnode **iter);
 API_EXPORT(void *) sl_find_neighbors(const Skiplist * sl, const void *data, struct skiplistnode **iter, struct skiplistnode **prev, struct skiplistnode **next);
-API_EXPORT(void *) sl_next(Skiplist * sl, struct skiplistnode **);
-API_EXPORT(void *) sl_next(Skiplist * sl, struct skiplistnode **);
-API_EXPORT(void *) sl_previous(Skiplist * sl, struct skiplistnode **);
+API_EXPORT(void *) sl_next(struct skiplistnode **);
+API_EXPORT(void *) sl_previous(struct skiplistnode **);
 
 API_EXPORT(struct skiplistnode *) sl_insert_compare(Skiplist * sl,
                                        void *data, SkiplistComparator comp);

@@ -250,7 +250,7 @@ int config_foreach_spreadconf(int (*func)(SpreadConfiguration *, void *),
   sc = iter->data;
   do {
     if(func(sc, closure)==0) i++;
-  } while((sc = sl_next(&spreaddaemons, &iter))!=NULL);
+  } while((sc = sl_next(&iter))!=NULL);
   return i;  
 }
 
@@ -265,7 +265,7 @@ int config_foreach_logfacility(SpreadConfiguration *sc,
   lf = iter->data;
   do {
     if(func(lf, closure)==0) i++;
-  } while((lf = sl_next(sc->logfacilities, &iter))!=NULL);
+  } while((lf = sl_next(&iter))!=NULL);
   return i;  
 }
 
@@ -324,8 +324,8 @@ int config_close(void) {
 	close(lf->logfile->fd);
 	lf->logfile->fd = -1;
       }
-    } while((lf = sl_next(sc->logfacilities, &lfiter))!=NULL);
-  } while((sc = sl_next(&spreaddaemons, &sciter))!=NULL);
+    } while((lf = sl_next(&lfiter))!=NULL);
+  } while((sc = sl_next(&sciter))!=NULL);
   return 0;
 }  
 
@@ -392,8 +392,8 @@ int config_start(void) {
 		lf->groupname, lf->logfile->filename,
 		lf->logfile->fd, lf->nmatches);
       }
-    } while((lf = sl_next(sc->logfacilities, &lfiter))!=NULL);
-  } while((sc = sl_next(&spreaddaemons, &sciter))!=NULL);
+    } while((lf = sl_next(&lfiter))!=NULL);
+  } while((sc = sl_next(&sciter))!=NULL);
   return 0;
 }  
 
