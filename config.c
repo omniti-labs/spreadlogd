@@ -39,16 +39,16 @@ static Skiplist logfiles;
 static Skiplist spreaddaemons;
 extern int verbose;
 extern int skiplocking;
-int logfile_compare(void *a, void *b) {
+int logfile_compare(const void *a, const void *b) {
   LogFile *ar = (LogFile *)a;
   LogFile *br = (LogFile *)b;
   return strcmp(ar->filename, br->filename);
 } 
-int logfile_compare_key(void *a, void *b) {
+int logfile_compare_key(const void *a, const void *b) {
   LogFile *br = (LogFile *)b;
   return strcmp(a, br->filename);
 }  
-int spreadd_compare(void *a, void *b) {
+int spreadd_compare(const void *a, const void *b) {
   SpreadConfiguration *ar = (SpreadConfiguration *)a;
   SpreadConfiguration *br = (SpreadConfiguration *)b;
   int temp;
@@ -59,7 +59,7 @@ int spreadd_compare(void *a, void *b) {
   if(!br->host) return 1;
   return strcmp(ar->host, br->host);
 } 
-int spreadd_compare_key(void *a, void *b) {
+int spreadd_compare_key(const void *a, const void *b) {
   SpreadConfiguration *br = (SpreadConfiguration *)b;
   int temp;
   if((temp = strcmp(a, br->port))!=0)
@@ -69,12 +69,12 @@ int spreadd_compare_key(void *a, void *b) {
   if(!br->host) return 1;
   return strcmp(a, br->host);
 }  
-int facility_compare(void *a, void *b) {
+int facility_compare(const void *a, const void *b) {
   LogFacility *ar = (LogFacility *)a;
   LogFacility *br = (LogFacility *)b;
   return strcmp(ar->groupname, br->groupname);
 } 
-int facility_compare_key(void *a, void *b) {
+int facility_compare_key(const void *a, const void *b) {
   LogFacility *br = (LogFacility *)b;
   return strcmp(a, br->groupname);
 }
@@ -138,10 +138,8 @@ void config_add_spreadconf(SpreadConfiguration *sc) {
 } 
 SpreadConfiguration *config_new_spread_conf(void) {
   SpreadConfiguration *newsc;
-  newsc = (SpreadConfiguration *)malloc(sizeof(SpreadConfiguration));
-  newsc->host=NULL;
+  newsc = (SpreadConfiguration *)calloc(1, sizeof(SpreadConfiguration));
   newsc->port=strdup("4803");
-  newsc->connected = 0;
   newsc->logfacilities = (Skiplist *)malloc(sizeof(Skiplist));
   sl_init(newsc->logfacilities);
   sl_set_compare(newsc->logfacilities,
@@ -485,6 +483,7 @@ int config_get_fd(SpreadConfiguration *sc, char *group, char *message) {
   slen = strlen(message);
   for(i=0; i<lf->nmatches; i++) {
 #ifdef RE_SYNTAX_EGREP
+    int ret;
     if((ret = re_search(&lf->match_expression[i],
 			message, slen, 0, slen, NULL)) >= 0)
       return lf->logfile->fd;

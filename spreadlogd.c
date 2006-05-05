@@ -217,6 +217,7 @@ int main(int argc, char **argv) {
   int getoption, debug = 0;
   struct timeval tv;
 
+  event_init();
   module_init();
 
   while((getoption = getopt(argc, argv, "b:c:svxDV")) != -1) {
@@ -256,8 +257,6 @@ int main(int argc, char **argv) {
 	    (extralog)?"YES":"NO",
 	    buffsize);
   }
-
-  event_init();
 
   if(!debug) daemonize();
 

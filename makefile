@@ -2,7 +2,7 @@ CC=gcc
 
 #### BEGIN ARCH DEPENDANT SECTION ####
 # For Linux
-#LDFLAGS=-L/usr/local/lib -L. -L/opt/spread/lib -Wl,-rpath /opt/spread/lib `perl -MExtUtils::Embed -e ldopts`
+#LDFLAGS=-L/usr/local/lib -Wl,-rpath /usr/local/lib -L. -L/opt/spread/lib -Wl,-rpath /opt/spread/lib `perl -MExtUtils::Embed -e ldopts`
 #LIBS=-lspread -levent
 #CFLAGS=-g -D__USE_LARGEFILE64 -Wall
 #MAIN=spreadlogd.o
@@ -16,7 +16,7 @@ CC=gcc
 #MACOSX
 LDFLAGS=-L/usr/local/lib -L. `perl -MExtUtils::Embed -e ldopts`
 LIBS=-lspread -levent
-CFLAGS=-g -Wall
+CFLAGS=-g -D__USE_LARGEFILE64 -Wall
 MAIN=spreadlogd.o
 
 # For Solaris
@@ -37,7 +37,8 @@ LEX=flex
 AR=ar
 RANLIB=ranlib
 
-OBJS=lex.sld_.o y.tab.o config.o hash.o timefuncs.o module.o $(PERL_OBJS)
+OBJS=lex.sld_.o y.tab.o config.o hash.o timefuncs.o module.o nethelp.o \
+	$(PERL_OBJS)
 LSLOBJS=skiplist.o echash.o
 
 all:	spreadlogd
