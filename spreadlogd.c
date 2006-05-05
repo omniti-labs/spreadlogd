@@ -79,12 +79,12 @@ static int connectandjoin(SpreadConfiguration *sc, void *uv) {
 		(sc->host)?':':'/',
 		sc->port, mbox);
       sc->fd = mbox;
+      event_set(&sc->event, mbox, EV_READ|EV_PERSIST, handle_message, sc);
+      event_add(&sc->event, NULL);
     }
     sc->connected = 1;
     if(*todo & _TODO_JOIN)
       config_foreach_logfacility(sc, join, &mbox);
-    event_set(&sc->event, mbox, EV_READ|EV_PERSIST, handle_message, sc);
-    event_add(&sc->event, NULL);
     return mbox;
   }
   if(verbose)
