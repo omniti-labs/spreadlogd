@@ -9,9 +9,7 @@
  * ======================================================================
 */
 
-#include <string.h>
-
-#include "config.h"
+#include "sld_config.h"
 #include "y.tab.h"
 
 extern int line_num;

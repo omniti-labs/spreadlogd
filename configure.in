@@ -1,0 +1,63 @@
+AC_INIT(spreadlogd.c)
+AC_CONFIG_HEADER(sld_config.h)
+AC_PROG_CC
+AC_C_BIGENDIAN
+AC_PROG_CPP
+AC_PROG_INSTALL
+AC_PROG_RANLIB
+AC_PROG_LN_S
+AC_PROG_YACC
+AC_PROG_LEX
+
+AC_PATH_PROGS(PERL, perl)
+AC_PATH_PROG(AR, ar)
+AC_SUBST(PERL)
+AC_C_INLINE
+
+# large file support
+CPPFLAGS="$CPPFLAGS -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE"
+
+AC_CHECK_LIB(nsl, gethostbyaddr, , )
+AC_CHECK_LIB(socket, socket, , )
+AC_CHECK_LIB(dl, dlopen, , )
+AC_CHECK_LIB(event, event_del, , AC_MSG_ERROR([****** needs libevent]))
+AC_CHECK_LIB(spread, SP_receive, , )
+AC_CHECK_LIB(gnuregex, regex_compile, , )
+if test "x$ac_cv_lib_spread_SP_receive" != "xyes"; then
+	AC_CHECK_LIB(sp, SP_receive, ,
+		AC_MSG_ERROR([****** needs Spread libraries]))
+fi
+AC_CHECK_HEADERS([ \
+	arpa/inet.h arpa/nameser.h assert.h ctype.h dlfcn.h errno.h \
+	fcntl.h gnuregex.h limits.h netinet/in.h signal.h stdint.h stdio.h \
+	stdlib.h string.h sys/cdefs.h sys/filio.h sys/ioctl.h sys/socket.h \
+	sys/sockio.h sys/time.h sys/types.h sys/uio.h time.h unistd.h \
+])
+AC_CHECK_HEADER(sp.h)
+if test "x$ac_cv_header_sp_h" = "xno"; then
+	AC_MSG_ERROR([****** needs Spread's sp.h])
+fi
+AC_CHECK_HEADER(event.h)
+if test "x$ac_cv_header_event_h" = "xno"; then
+	AC_MSG_ERROR([****** needs libevent's event.h])
+fi
+
+# Checks for data types
+AC_CHECK_SIZEOF(char, 1)
+AC_CHECK_SIZEOF(short int, 2)
+AC_CHECK_SIZEOF(int, 4)
+AC_CHECK_SIZEOF(long int, 4)
+AC_CHECK_SIZEOF(long long int, 8)
+AC_CHECK_SIZEOF(void *, 1)
+
+echo "Resolving configuration path..."
+fullpath=$sysconfdir
+while test "x$temppath" != "x$fullpath" ; do
+  temppath=$fullpath
+  fullpath=`eval echo ${fullpath}`
+done
+fullpath=`echo $fullpath | sed "s~NONE~$ac_default_prefix~"` 
+AC_DEFINE_UNQUOTED(ETCDIR, "${fullpath}")
+
+AC_SUBST(ETCDIR)
+AC_OUTPUT([Makefile])

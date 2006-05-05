@@ -8,10 +8,7 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
+#include "sld_config.h"
 #include "skiplist.h"
 
 #define MAXHEIGHT 32

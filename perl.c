@@ -1,4 +1,6 @@
 #include "perl.h"
+#include <EXTERN.h>
+#include <perl.h>
 
 EXTERN_C void xs_init();
 

@@ -9,9 +9,7 @@
  * ======================================================================
 */
 
-#include "config.h"
-#include <stdio.h>
-#include <string.h>
+#include "sld_config.h"
 
 extern int line_num, semantic_errors;
 extern int buffsize;

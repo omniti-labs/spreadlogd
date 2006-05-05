@@ -24,9 +24,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "config.h"
-#include "memory.h"
-#include "util.h"
+#include "sld_config.h"
 #include "echash.h"
 
 /* This is from http://burtleburtle.net/bob/hash/doobs.html */

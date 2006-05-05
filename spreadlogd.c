@@ -8,18 +8,7 @@
  * ======================================================================
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <signal.h>
-#include <unistd.h>
-#include <sys/time.h>
-#include <sys/resource.h>
-#include <sp.h>
-#include <errno.h>
-#include <event.h>
-
-#include "config.h"
+#include "sld_config.h"
 #include "module.h"
 
 #define SPREADLOGD_VERSION "1.5.0"
@@ -40,14 +29,14 @@ int skiplocking = 0;
 int buffsize = -1;
 char *module_dir = NULL;
 
-static char *default_configfile = "/etc/spreadlogd.conf";
+static char *default_configfile = ETCDIR "/spreadlogd.conf";
 static int connectandjoin(SpreadConfiguration *sc, void *uv);
 static void handle_message(int fd, short event, void *arg);
 static int paranoid_establish_spread_connections();
 
 void usage(char *progname) {
   fprintf(stderr, "%s\t\tVERSION: %s\n \
-\t-c configfile\t\t[default /etc/spreadlogd.conf]\n \
+\t-c configfile\t\t[default " ETCDIR "/spreadlogd.conf]\n \
 \t-s\t\t\tskip locking (flock) files (NOT RECOMMENDED)\n \
 \t-v\t\t\tverbose mode\n \
 \t-x\t\t\tlog errors talking with spread\n \

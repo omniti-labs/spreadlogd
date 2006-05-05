@@ -11,11 +11,7 @@
  * ======================================================================
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-
+#include "sld_config.h"
 #include "hash.h"
 
 int __fhash_size = 1024;

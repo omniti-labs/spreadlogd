@@ -1,0 +1,60 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+bindir=@bindir@
+sbindir=@sbindir@
+libdir=@libdir@
+libexecdir=@libexecdir@
+mandir=@mandir@
+mansubdir=@mansubdir@
+sysconfdir=@sysconfdir@
+piddir=@piddir@
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+
+DESTDIR=
+PERL=@PERL@
+YACC=@YACC@
+LEX=@LEX@
+AR=@AR@
+RANLIB=@RANLIB@
+LN_S=@LN_S@
+
+CC=@CC@
+CPPFLAGS=@CPPFLAGS@ -DPERL
+CFLAGS=@CFLAGS@ `$(PERL) -MExtUtils::Embed -e ccopts`
+LDFLAGS=@LDFLAGS@ `$(PERL) -MExtUtils::Embed -e ldopts`
+LIBS=@LIBS@
+
+PERL_OBJS=perl.o perlxsi.o
+OBJS=spreadlogd.o lex.sld_.o y.tab.o config.o hash.o timefuncs.o \
+	module.o nethelp.o skiplist.o echash.o $(PERL_OBJS)
+
+all:	spreadlogd
+
+parser:	lex.sld_.c y.tab.c y.tab.h
+
+lex.sld_.c:	config_gram.l
+	$(LEX) -Psld_ config_gram.l
+y.tab.c y.tab.h:	config_gram.y
+	$(YACC) -p sld_ -d config_gram.y
+lex.sld_.o: lex.sld_.c y.tab.h
+y.tab.o: y.tab.c config.h
+
+perlxsi.c:
+	$(PERL) -MExtUtils::Embed -e xsinit -- -o perlxsi.c
+
+.c.o:
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(INCLUDES) -c $<
+
+spreadlogd:	$(OBJS)
+	$(CC) -g -o $@ $(OBJS) $(LDFLAGS) $(LIBS)
+
+install:	spreadlogd
+	$(srcdir)/mkinstalldirs $(DESTDIR)$(sbindir)
+	$(INSTALL) -m 0755 spreadlogd $(DESTDIR)$(sbindir)/spreadlogd
+	$(srcdir)/mkinstalldirs $(DESTDIR)$(sysconfdir)
+	$(INSTALL) -m 0755 spreadlogd.conf $(DESTDIR)$(sysconfdir)/spreadlogd.conf.sample
+
+clean:
+	rm -f *~ *.o spreadlogd libskiplist.a y.tab.h y.tab.c lex.sld_.c \
+		perlxsi.c

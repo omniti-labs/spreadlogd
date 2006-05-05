@@ -8,16 +8,7 @@
 * ======================================================================
 */
 
-
-#include <stdio.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <sys/file.h>
-#include <sys/param.h>
-#include <unistd.h>
-#include <signal.h>
+#include "sld_config.h"
 
 #ifdef PERL
 #include "perl.h"
@@ -25,7 +16,6 @@
 #ifdef PYTHON
 #include "python.h"
 #endif
-#include "config.h"
 #include "skiplist.h"
 #include "timefuncs.h"
 #include "module.h"
