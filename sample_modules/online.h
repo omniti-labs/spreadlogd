@@ -1,3 +1,6 @@
+#ifndef _ONLINE_H_
+#define _ONLINE_H_
+
 #include "sld_config.h"
 #include "module.h"
 #include "echash.h"
@@ -26,3 +29,4 @@ void cull_old_hits();
 struct skiplistnode *get_first_hit_for_url(const char *url);
 unsigned int get_current_online_count();
 
+#endif

@@ -32,8 +32,8 @@ static void get_hit_info(const char *url, unsigned int *total,
   if(!first) return; /* something is very wrong */
   while(*nusers < max_users && first) {
     hit_t *hit = (hit_t *)first->data;
-    /* URL is a pointer, but it is shared so we can compare pointers */
-    if(!hit || hit->URL != uc->URL) break;
+    /* keep going until we see a new URL */
+    if(!hit || strcmp(hit->URL,uc->URL)) break;
     uinfo[*nusers].SiteUserID = hit->SiteUserID;
     uinfo[*nusers].age = now - hit->Hitdate;
     (*nusers)++;
@@ -76,11 +76,12 @@ void online_service(int fd, short event, void *vnl) {
   get_hit_info(req->url, &total, &url_total, uinfo, &nusers);
 
   /* Pack it on the network */
-  expected_write = sizeof(unsigned int) * 3 + nusers * sizeof(*uinfo);
+  expected_write = sizeof(total) * 3 + nusers * sizeof(*uinfo);
   io[0].iov_base = &total;     io[0].iov_len = sizeof(total);
   io[1].iov_base = &url_total; io[1].iov_len = sizeof(url_total);
   io[2].iov_base = &nusers;    io[2].iov_len = sizeof(nusers);
-  io[3].iov_base = uinfo;      io[3].iov_len = nusers * sizeof(*uinfo);
+  io[3].iov_base = uinfo;
+  io[3].iov_len = nusers * sizeof(*uinfo);
 
   total = htonl(total);
   url_total = htonl(url_total);

@@ -7,7 +7,6 @@ void urlcount_free(void *vuc) {
   if(((urlcount_t *)vuc)->URL) free(((urlcount_t *)vuc)->URL);
   free(vuc);
 }
-
 urlcount_t *get_url(const char *url, int len) {
   void *uc;
   if(echash_retrieve(&urls, url, len, &uc)) return uc;
@@ -23,7 +22,6 @@ static void urlcount_decrement(const char *url) {
       echash_delete(&urls, url, strlen(url), NULL, urlcount_free);
   }
 }
-
 void hit_free(void *vhit) {
   urlcount_decrement(((hit_t *)vhit)->URL);
   free(vhit);
@@ -103,12 +101,12 @@ static int online_init(const char *config) {
   a = tokens[(b)]; \
 } while(0)
 
-static void online_logline(SpreadConfiguration *sc, const char *sender,
-                        const char *group, const char *message) {
+static void online_logline(SpreadConfiguration *sc,
+      const char *sender, const char *group, const char *message) {
   const char *tokens[8];
-	  const char *user, *url;
-	  unsigned long long SiteUserID;
-	  int user_len, url_len;
+  const char *user, *url;
+  unsigned long long SiteUserID;
+  int user_len, url_len;
   urlcount_t *uc;
   hit_t *hit;
   int i;
