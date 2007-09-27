@@ -110,9 +110,20 @@ static void handle_signals() {
 }
 
 void daemonize(void) {
+  int fd;
   if(fork()!=0) exit(0);
   setsid();
   if(fork()!=0) exit(0);
+  chdir("/");
+  if((fd = open("/dev/null", O_RDWR, 0)) == -1) {
+    fprintf(stderr, "Cannot open /dev/null\n");
+    exit(0);
+  }
+  dup2(fd, STDIN_FILENO);
+  dup2(fd, STDOUT_FILENO);
+  dup2(fd, STDERR_FILENO);
+  if(fd > STDERR_FILENO)
+    close(fd);
 }
 
 static void handle_message(int fd, short event, void *arg) {
