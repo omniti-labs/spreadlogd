@@ -11,7 +11,7 @@
 #include "sld_config.h"
 #include "module.h"
 
-#define SPREADLOGD_VERSION "2.0.0"
+#define SPREADLOGD_VERSION "2.0.1"
 
 #define _TODO_JOIN 1
 #define _TODO_PARANOID_CONNECT 2
