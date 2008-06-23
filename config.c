@@ -300,7 +300,15 @@ int config_close(void) {
   struct skiplistnode *sciter, *lfiter;
   SpreadConfiguration *sc;
   LogFacility *lf;
-				int i;
+  int i;
+#ifndef LOCK_UN
+  struct flock fl;
+  fl.l_type = F_UNLCK;
+  fl.l_whence = SEEK_SET;
+  fl.l_start = 0;
+  fl.l_len = 0;
+#endif
+
   sciter = sl_getlist(&spreaddaemons);
   if(!sciter) return 0;
   sc = (SpreadConfiguration *)sciter->data;
@@ -314,13 +322,23 @@ int config_close(void) {
       if(lf->vhostdir) {
 	for (i=0;i< FHASH_SIZE;i++) {
 	  if(lf->hash[i].fd>0) {
-	    if(!skiplocking) flock(lf->hash[i].fd, LOCK_UN);
+	    if(!skiplocking)
+#ifdef LOCK_UN
+              flock(lf->hash[i].fd, LOCK_UN);
+#else
+              fcntl(lf->hash[i].fd, F_SETLKW, &fl);
+#endif
 	    close(lf->hash[i].fd);
 	    lf->hash[i].fd = -1;
 	  }
 	}
       } else if(lf->logfile && lf->logfile->fd>0) {
-	if(!skiplocking) flock(lf->logfile->fd, LOCK_UN);
+	if(!skiplocking)
+#ifdef LOCK_UN
+          flock(lf->logfile->fd, LOCK_UN);
+#else
+          fcntl(lf->logfile->fd, F_SETLKW, &fl);
+#endif
 	close(lf->logfile->fd);
 	lf->logfile->fd = -1;
       }
@@ -356,6 +374,14 @@ int config_start(void) {
   struct skiplistnode *sciter, *lfiter;
   SpreadConfiguration *sc;
   LogFacility *lf;
+#ifndef LOCK_UN
+  struct flock fl;
+  fl.l_type = F_WRLCK;
+  fl.l_whence = SEEK_SET;
+  fl.l_start = 0;
+  fl.l_len = 0;
+#endif
+
   sciter = sl_getlist(&spreaddaemons);
   if(!sciter) return 0;
   sc = (SpreadConfiguration *)sciter->data;
@@ -381,7 +407,13 @@ int config_start(void) {
 			}
 		}	
       if(!skiplocking) {
-	if(flock(lf->logfile->fd, LOCK_NB|LOCK_EX)==-1) {
+	if(
+#ifdef LOCK_UN
+           flock(lf->logfile->fd, LOCK_NB|LOCK_EX)
+#else
+           fcntl(lf->logfile->fd, F_SETLK, &fl)
+#endif
+           == -1) {
 	  fprintf(stderr, "Cannot lock %s, is another spreadlogd running?\n",
 		  lf->logfile->filename);
 	  exit(1);
@@ -441,6 +473,14 @@ int config_get_fd(SpreadConfiguration *sc, char *group, char *message) {
   hash_element temp;
   char *cp;
   char fullpath[MAXPATHLEN];
+#ifndef LOCK_UN
+  struct flock fl;
+  fl.l_type = F_WRLCK;
+  fl.l_whence = SEEK_SET;
+  fl.l_start = 0;
+  fl.l_len = 0;
+#endif
+
   lf = sl_find(sc->logfacilities, group, NULL);
   if(!lf || !lf->logfile || !lf->logfile->filename) return -1;
   if(lf->vhostdir) {
@@ -457,7 +497,13 @@ int config_get_fd(SpreadConfiguration *sc, char *group, char *message) {
 		     O_CREAT|O_APPEND|O_WRONLY,
 	 	     00644);
       if(!skiplocking) {
-	if(flock(temp.fd, LOCK_NB|LOCK_EX)==-1) {
+	if(
+#ifdef LOCK_UN
+           flock(temp.fd, LOCK_NB|LOCK_EX)
+#else
+           fcntl(temp.fd, F_SETLK, &fl)
+#endif
+           == -1) {
 	  fprintf(stderr, "Cannot lock %s, is another spreadlogd running?\n",
 		  fullpath);
 	  exit(1);

@@ -90,8 +90,8 @@ API_EXPORT(int) echash_nextkey(ec_hash_table *h, const char **k, int *klen, char
 
 /* This function serves no real API use sans calculating expected buckets
    for keys (or extending the hash... which is unsupported) */
-API_EXPORT(unsigned int) echash__hash(const char *k, u_int32_t length,
-                                   u_int32_t initval);
+API_EXPORT(unsigned int) echash__hash(const char *k, unsigned int length,
+                                   unsigned int initval);
 API_EXPORT(ec_hash_bucket *) echash__new_bucket(const char *k, int klen,
                                                 void *data);
 API_EXPORT(void) echash__rebucket(ec_hash_table *h, int newsize);
